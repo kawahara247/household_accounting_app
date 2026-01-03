@@ -20,8 +20,12 @@ class CategoryTest extends TestCase
     {
         // Arrange
         $user = User::factory()->create();
-        Category::create(['name' => '食費', 'type' => 'expense']);
-        Category::create(['name' => '給与', 'type' => 'income']);
+        Category::create([
+            'name'  => '食費',
+            'type'  => 'expense',
+            'icon'  => '🍔',
+            'color' => '#FF5733',
+        ]);
 
         // Act
         $response = $this->actingAs($user)->get(route('categories.index'));
@@ -31,7 +35,17 @@ class CategoryTest extends TestCase
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->component('Categories/Index')
-                ->has('categories', 2)
+                ->has('categories', 1)
+                ->has(
+                    'categories.0',
+                    fn (Assert $category) => $category
+                        ->has('id')
+                        ->where('name', '食費')
+                        ->where('type', 'expense')
+                        ->where('icon', '🍔')
+                        ->where('color', '#FF5733')
+                        ->etc()
+                )
         );
     }
 
@@ -58,7 +72,7 @@ class CategoryTest extends TestCase
         ];
 
         // Act
-        $category = Category::create($data);
+        Category::create($data);
 
         // Assert
         $this->assertDatabaseHas('categories', [
@@ -73,8 +87,10 @@ class CategoryTest extends TestCase
         // Arrange
         $user = User::factory()->create();
         $data = [
-            'name' => '食費',
-            'type' => 'expense',
+            'name'  => '食費',
+            'type'  => 'expense',
+            'icon'  => '🍔',
+            'color' => '#FF5733',
         ];
 
         // Act
@@ -84,8 +100,10 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertRedirect(route('categories.index'));
         $this->assertDatabaseHas('categories', [
-            'name' => '食費',
-            'type' => 'expense',
+            'name'  => '食費',
+            'type'  => 'expense',
+            'icon'  => '🍔',
+            'color' => '#FF5733',
         ]);
     }
 
@@ -147,8 +165,10 @@ class CategoryTest extends TestCase
         $user     = User::factory()->create();
         $category = Category::create(['name' => '食費', 'type' => 'expense']);
         $data     = [
-            'name' => '外食費',
-            'type' => 'expense',
+            'name'  => '外食費',
+            'type'  => 'expense',
+            'icon'  => '🍜',
+            'color' => '#33FF57',
         ];
 
         // Act
@@ -158,8 +178,10 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertRedirect(route('categories.index'));
         $this->assertDatabaseHas('categories', [
-            'id'   => $category->id,
-            'name' => '外食費',
+            'id'    => $category->id,
+            'name'  => '外食費',
+            'icon'  => '🍜',
+            'color' => '#33FF57',
         ]);
     }
 
@@ -209,5 +231,23 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertRedirect(route('login'));
         $this->assertDatabaseHas('categories', ['id' => $category->id]);
+    }
+
+    #[Test]
+    public function カテゴリがない場合も正常に表示される(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+
+        // Act
+        $response = $this->actingAs($user)->get(route('categories.index'));
+
+        // Assert
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Categories/Index')
+                ->has('categories', 0)
+        );
     }
 }
