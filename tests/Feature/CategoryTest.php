@@ -49,7 +49,7 @@ class CategoryTest extends TestCase
     }
 
     #[Test]
-    public function カテゴリを作成できる(): void
+    public function カテゴリをモデルで作成できる(): void
     {
         // Arrange
         $data = [
@@ -65,5 +65,78 @@ class CategoryTest extends TestCase
             'name' => '食費',
             'type' => 'expense',
         ]);
+    }
+
+    #[Test]
+    public function 認証済みユーザーはカテゴリを作成できる(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $data = [
+            'name' => '食費',
+            'type' => 'expense',
+        ];
+
+        // Act
+        $response = $this->actingAs($user)
+            ->post(route('categories.store'), $data);
+
+        // Assert
+        $response->assertRedirect(route('categories.index'));
+        $this->assertDatabaseHas('categories', [
+            'name' => '食費',
+            'type' => 'expense',
+        ]);
+    }
+
+    #[Test]
+    public function 未認証ユーザーはカテゴリを作成できない(): void
+    {
+        // Arrange
+        $data = [
+            'name' => '食費',
+            'type' => 'expense',
+        ];
+
+        // Act
+        $response = $this->post(route('categories.store'), $data);
+
+        // Assert
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseMissing('categories', ['name' => '食費']);
+    }
+
+    #[Test]
+    public function カテゴリ作成時に名前は必須(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $data = [
+            'name' => '',
+            'type' => 'expense',
+        ];
+
+        // Act
+        $response = $this->actingAs($user)->post(route('categories.store'), $data);
+
+        // Assert
+        $response->assertSessionHasErrors('name');
+    }
+
+    #[Test]
+    public function カテゴリ作成時に種別は必須(): void
+    {
+        // Arrange
+        $user = User::factory()->create();
+        $data = [
+            'name' => '食費',
+            'type' => '',
+        ];
+
+        // Act
+        $response = $this->actingAs($user)->post(route('categories.store'), $data);
+
+        // Assert
+        $response->assertSessionHasErrors('type');
     }
 }
