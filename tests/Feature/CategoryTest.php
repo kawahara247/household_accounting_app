@@ -139,4 +139,75 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertSessionHasErrors('type');
     }
+
+    #[Test]
+    public function 認証済みユーザーはカテゴリを更新できる(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create(['name' => '食費', 'type' => 'expense']);
+        $data     = [
+            'name' => '外食費',
+            'type' => 'expense',
+        ];
+
+        // Act
+        $response = $this->actingAs($user)
+            ->put(route('categories.update', $category), $data);
+
+        // Assert
+        $response->assertRedirect(route('categories.index'));
+        $this->assertDatabaseHas('categories', [
+            'id'   => $category->id,
+            'name' => '外食費',
+        ]);
+    }
+
+    #[Test]
+    public function 未認証ユーザーはカテゴリを更新できない(): void
+    {
+        // Arrange
+        $category = Category::create(['name' => '食費', 'type' => 'expense']);
+        $data     = [
+            'name' => '外食費',
+            'type' => 'expense',
+        ];
+
+        // Act
+        $response = $this->put(route('categories.update', $category), $data);
+
+        // Assert
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseHas('categories', ['name' => '食費']);
+    }
+
+    #[Test]
+    public function 認証済みユーザーはカテゴリを削除できる(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create(['name' => '食費', 'type' => 'expense']);
+
+        // Act
+        $response = $this->actingAs($user)
+            ->delete(route('categories.destroy', $category));
+
+        // Assert
+        $response->assertRedirect(route('categories.index'));
+        $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+    }
+
+    #[Test]
+    public function 未認証ユーザーはカテゴリを削除できない(): void
+    {
+        // Arrange
+        $category = Category::create(['name' => '食費', 'type' => 'expense']);
+
+        // Act
+        $response = $this->delete(route('categories.destroy', $category));
+
+        // Assert
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseHas('categories', ['id' => $category->id]);
+    }
 }

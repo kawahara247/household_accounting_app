@@ -8,7 +8,7 @@ use App\Enums\CategoryType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class CategoryStoreRequest extends FormRequest
+class CategoryUpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {

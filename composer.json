@@ -44,7 +44,12 @@
             "@php artisan key:generate",
             "@php artisan migrate --force",
             "npm install",
-            "npm run build"
+            "npm run build",
+            "@fix-permissions"
+        ],
+        "fix-permissions": [
+            "chmod -R 775 storage bootstrap/cache database",
+            "chmod 664 database/database.sqlite || true"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
