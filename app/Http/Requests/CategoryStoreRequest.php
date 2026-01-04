@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\CategoryType;
+use App\Enums\FlowType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -22,7 +22,7 @@ class CategoryStoreRequest extends FormRequest
     {
         return [
             'name'  => ['required', 'string', 'max:255'],
-            'type'  => ['required', new Enum(CategoryType::class)],
+            'type'  => ['required', new Enum(FlowType::class)],
             'icon'  => ['nullable', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'max:255'],
         ];

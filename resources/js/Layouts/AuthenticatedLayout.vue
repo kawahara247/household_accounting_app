@@ -39,6 +39,18 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    :href="route('transactions.index')"
+                                    :active="route().current('transactions.index')"
+                                >
+                                    取引一覧
+                                </NavLink>
+                                <NavLink
+                                    :href="route('categories.index')"
+                                    :active="route().current('categories.index')"
+                                >
+                                    カテゴリ
+                                </NavLink>
                             </div>
                         </div>
 
@@ -145,6 +157,18 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('transactions.index')"
+                            :active="route().current('transactions.index')"
+                        >
+                            取引一覧
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('categories.index')"
+                            :active="route().current('categories.index')"
+                        >
+                            カテゴリ
                         </ResponsiveNavLink>
                     </div>
 

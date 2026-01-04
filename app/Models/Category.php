@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\CategoryType;
+use App\Enums\FlowType;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
@@ -17,7 +17,7 @@ class Category extends Model
     protected function casts(): array
     {
         return [
-            'type' => CategoryType::class,
+            'type' => FlowType::class,
         ];
     }
 }
