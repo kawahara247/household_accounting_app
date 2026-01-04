@@ -13,8 +13,6 @@ return new class extends Migration
             $table->id()->comment('ID');
             $table->string('name')->comment('カテゴリ名');
             $table->string('type')->comment('種別（income: 収入 / expense: 支出）');
-            $table->string('icon')->nullable()->comment('アイコン');
-            $table->string('color')->nullable()->comment('表示色');
             $table->datetime('created_at')->nullable()->comment('作成日時');
             $table->datetime('updated_at')->nullable()->comment('更新日時');
         });

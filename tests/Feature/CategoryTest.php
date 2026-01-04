@@ -21,10 +21,8 @@ class CategoryTest extends TestCase
         // Arrange
         $user = User::factory()->create();
         Category::create([
-            'name'  => '食費',
-            'type'  => 'expense',
-            'icon'  => '🍔',
-            'color' => '#FF5733',
+            'name' => '食費',
+            'type' => 'expense',
         ]);
 
         // Act
@@ -42,8 +40,6 @@ class CategoryTest extends TestCase
                         ->has('id')
                         ->where('name', '食費')
                         ->where('type', 'expense')
-                        ->where('icon', '🍔')
-                        ->where('color', '#FF5733')
                         ->etc()
                 )
         );
@@ -87,10 +83,8 @@ class CategoryTest extends TestCase
         // Arrange
         $user = User::factory()->create();
         $data = [
-            'name'  => '食費',
-            'type'  => 'expense',
-            'icon'  => '🍔',
-            'color' => '#FF5733',
+            'name' => '食費',
+            'type' => 'expense',
         ];
 
         // Act
@@ -100,10 +94,8 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertRedirect(route('categories.index'));
         $this->assertDatabaseHas('categories', [
-            'name'  => '食費',
-            'type'  => 'expense',
-            'icon'  => '🍔',
-            'color' => '#FF5733',
+            'name' => '食費',
+            'type' => 'expense',
         ]);
     }
 
@@ -165,10 +157,8 @@ class CategoryTest extends TestCase
         $user     = User::factory()->create();
         $category = Category::create(['name' => '食費', 'type' => 'expense']);
         $data     = [
-            'name'  => '外食費',
-            'type'  => 'expense',
-            'icon'  => '🍜',
-            'color' => '#33FF57',
+            'name' => '外食費',
+            'type' => 'expense',
         ];
 
         // Act
@@ -178,10 +168,8 @@ class CategoryTest extends TestCase
         // Assert
         $response->assertRedirect(route('categories.index'));
         $this->assertDatabaseHas('categories', [
-            'id'    => $category->id,
-            'name'  => '外食費',
-            'icon'  => '🍜',
-            'color' => '#33FF57',
+            'id'   => $category->id,
+            'name' => '外食費',
         ]);
     }
 

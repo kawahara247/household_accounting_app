@@ -21,10 +21,8 @@ class CategoryUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'  => ['required', 'string', 'max:255'],
-            'type'  => ['required', new Enum(FlowType::class)],
-            'icon'  => ['nullable', 'string', 'max:255'],
-            'color' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', new Enum(FlowType::class)],
         ];
     }
 }

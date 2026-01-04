@@ -29,8 +29,6 @@ const nameInput = ref(null);
 const createForm = useForm({
     name: '',
     type: 'expense',
-    icon: '',
-    color: '',
 });
 
 // 編集フォーム
@@ -38,8 +36,6 @@ const editForm = useForm({
     id: null,
     name: '',
     type: 'expense',
-    icon: '',
-    color: '',
 });
 
 // 削除対象
@@ -81,8 +77,6 @@ const openEditModal = (category) => {
     editForm.id = category.id;
     editForm.name = category.name;
     editForm.type = category.type;
-    editForm.icon = category.icon || '';
-    editForm.color = category.color || '';
     editForm.clearErrors();
     showEditModal.value = true;
 };
@@ -147,12 +141,6 @@ const submitDelete = () => {
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                         種別
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        アイコン
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        色
-                                    </th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                                         操作
                                     </th>
@@ -170,17 +158,6 @@ const submitDelete = () => {
                                         >
                                             {{ typeLabel(category.type) }}
                                         </span>
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                        {{ category.icon || '-' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                        <span
-                                            v-if="category.color"
-                                            class="inline-block h-5 w-5 rounded"
-                                            :style="{ backgroundColor: category.color }"
-                                        ></span>
-                                        <span v-else>-</span>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                         <button
@@ -254,37 +231,6 @@ const submitDelete = () => {
                     <InputError :message="createForm.errors.type" class="mt-2" />
                 </div>
 
-                <div class="mt-4">
-                    <InputLabel for="create-icon" value="アイコン（任意）" />
-                    <TextInput
-                        id="create-icon"
-                        v-model="createForm.icon"
-                        type="text"
-                        class="mt-1 block w-full"
-                        placeholder="例: 🍔"
-                    />
-                    <InputError :message="createForm.errors.icon" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <InputLabel for="create-color" value="色（任意）" />
-                    <div class="mt-1 flex items-center gap-2">
-                        <input
-                            id="create-color"
-                            v-model="createForm.color"
-                            type="color"
-                            class="h-10 w-10 cursor-pointer rounded border border-gray-300"
-                        />
-                        <TextInput
-                            v-model="createForm.color"
-                            type="text"
-                            class="block w-full"
-                            placeholder="例: #FF5733"
-                        />
-                    </div>
-                    <InputError :message="createForm.errors.color" class="mt-2" />
-                </div>
-
                 <div class="mt-6 flex justify-end gap-3">
                     <SecondaryButton @click="closeCreateModal">
                         キャンセル
@@ -337,35 +283,6 @@ const submitDelete = () => {
                         </label>
                     </div>
                     <InputError :message="editForm.errors.type" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <InputLabel for="edit-icon" value="アイコン（任意）" />
-                    <TextInput
-                        id="edit-icon"
-                        v-model="editForm.icon"
-                        type="text"
-                        class="mt-1 block w-full"
-                    />
-                    <InputError :message="editForm.errors.icon" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <InputLabel for="edit-color" value="色（任意）" />
-                    <div class="mt-1 flex items-center gap-2">
-                        <input
-                            id="edit-color"
-                            v-model="editForm.color"
-                            type="color"
-                            class="h-10 w-10 cursor-pointer rounded border border-gray-300"
-                        />
-                        <TextInput
-                            v-model="editForm.color"
-                            type="text"
-                            class="block w-full"
-                        />
-                    </div>
-                    <InputError :message="editForm.errors.color" class="mt-2" />
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
