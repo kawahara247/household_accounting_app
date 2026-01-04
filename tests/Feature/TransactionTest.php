@@ -171,6 +171,33 @@ class TransactionTest extends TestCase
     }
 
     #[Test]
+    public function 取引作成時にリダイレクト先を指定できる(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+
+        // Act
+        $response = $this->actingAs($user)->post(route('transactions.store'), [
+            'date'        => '2026-01-04',
+            'type'        => 'expense',
+            'category_id' => $category->id,
+            'payer'       => 'person_a',
+            'amount'      => 1500,
+            '_redirect'   => 'dashboard',
+        ]);
+
+        // Assert
+        $response->assertRedirect(route('dashboard'));
+        $this->assertDatabaseHas('transactions', [
+            'amount' => 1500,
+        ]);
+    }
+
+    #[Test]
     public function 未認証ユーザーは取引を作成できない(): void
     {
         // Arrange

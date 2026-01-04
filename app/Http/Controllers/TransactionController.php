@@ -40,7 +40,9 @@ class TransactionController extends Controller
     {
         Transaction::create($request->validated());
 
-        return Redirect::route('transactions.index');
+        $redirect = $request->input('_redirect', 'transactions.index');
+
+        return Redirect::route($redirect);
     }
 
     public function update(TransactionUpdateRequest $request, Transaction $transaction): RedirectResponse
