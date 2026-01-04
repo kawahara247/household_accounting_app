@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+/**
+ * 支払者種別を表すEnum
+ *
+ * 家計簿の支払者（PersonA/PersonB）を定義する。
+ * 表示名は config/payers.php で設定可能。
+ */
 enum PayerType: string
 {
     case PersonA = 'person_a';
