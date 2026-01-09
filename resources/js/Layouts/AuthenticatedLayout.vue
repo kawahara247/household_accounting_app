@@ -51,6 +51,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     カテゴリ
                                 </NavLink>
+                                <NavLink
+                                    :href="route('recurring-transactions.index')"
+                                    :active="route().current('recurring-transactions.index')"
+                                >
+                                    定期取引
+                                </NavLink>
                             </div>
                         </div>
 
@@ -169,6 +175,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('categories.index')"
                         >
                             カテゴリ
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('recurring-transactions.index')"
+                            :active="route().current('recurring-transactions.index')"
+                        >
+                            定期取引
                         </ResponsiveNavLink>
                     </div>
 

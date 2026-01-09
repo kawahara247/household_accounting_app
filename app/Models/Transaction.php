@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property PayerType $payer
  * @property int $amount
  * @property string|null $memo
+ * @property int|null $recurring_transaction_id
  */
 class Transaction extends Model
 {
@@ -31,6 +32,14 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * @return BelongsTo<RecurringTransaction, $this>
+     */
+    public function recurringTransaction(): BelongsTo
+    {
+        return $this->belongsTo(RecurringTransaction::class);
     }
 
     /**
