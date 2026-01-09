@@ -7,8 +7,8 @@ import Modal from '@/Components/Modal.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, computed, reactive } from 'vue';
 
 const props = defineProps({
     transactions: {
@@ -23,10 +23,62 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    filters: {
+        type: Object,
+        default: () => ({}),
+    },
+    summary: {
+        type: Object,
+        default: () => ({ income: 0, expense: 0 }),
+    },
 });
 
 // 今日の日付
 const today = new Date().toISOString().split('T')[0];
+
+// フィルター状態
+const filterForm = reactive({
+    category_id: props.filters.category_id || '',
+    payer: props.filters.payer || '',
+    type: props.filters.type || '',
+    memo: props.filters.memo || '',
+});
+
+// フィルター適用
+const applyFilters = () => {
+    const params = {};
+    if (filterForm.category_id) params.category_id = filterForm.category_id;
+    if (filterForm.payer) params.payer = filterForm.payer;
+    if (filterForm.type) params.type = filterForm.type;
+    if (filterForm.memo) params.memo = filterForm.memo;
+
+    router.get(route('transactions.index'), params, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+// フィルターリセット
+const resetFilters = () => {
+    filterForm.category_id = '';
+    filterForm.payer = '';
+    filterForm.type = '';
+    filterForm.memo = '';
+    router.get(route('transactions.index'), {}, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
+
+// フィルターが適用されているかどうか
+const hasFilters = computed(() => {
+    return filterForm.category_id || filterForm.payer || filterForm.type || filterForm.memo;
+});
+
+// 収支差額
+const balance = computed(() => {
+    return props.summary.income - props.summary.expense;
+});
 
 // モーダル表示状態
 const showCreateModal = ref(false);
@@ -190,41 +242,129 @@ const submitDelete = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <!-- フィルターセクション -->
+                <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+                            <div>
+                                <label for="filter-category" class="block text-sm font-medium text-gray-700">カテゴリ</label>
+                                <select
+                                    id="filter-category"
+                                    v-model="filterForm.category_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">すべて</option>
+                                    <option
+                                        v-for="category in categories"
+                                        :key="category.id"
+                                        :value="category.id"
+                                    >
+                                        {{ category.name }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="filter-payer" class="block text-sm font-medium text-gray-700">支払元/受取人</label>
+                                <select
+                                    id="filter-payer"
+                                    v-model="filterForm.payer"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">すべて</option>
+                                    <option
+                                        v-for="payer in payers"
+                                        :key="payer.value"
+                                        :value="payer.value"
+                                    >
+                                        {{ payer.label }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="filter-type" class="block text-sm font-medium text-gray-700">種別</label>
+                                <select
+                                    id="filter-type"
+                                    v-model="filterForm.type"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="">すべて</option>
+                                    <option value="income">収入</option>
+                                    <option value="expense">支出</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="filter-memo" class="block text-sm font-medium text-gray-700">メモ</label>
+                                <input
+                                    id="filter-memo"
+                                    v-model="filterForm.memo"
+                                    type="text"
+                                    placeholder="キーワード検索"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                />
+                            </div>
+
+                            <div class="flex items-end gap-2">
+                                <PrimaryButton @click="applyFilters" class="flex-1">
+                                    検索
+                                </PrimaryButton>
+                                <SecondaryButton v-if="hasFilters" @click="resetFilters">
+                                    クリア
+                                </SecondaryButton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- サマリーセクション -->
+                <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm font-medium text-gray-500">収入合計</div>
+                        <div class="mt-1 text-2xl font-semibold text-green-600">
+                            +{{ formatAmount(summary.income) }}円
+                        </div>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm font-medium text-gray-500">支出合計</div>
+                        <div class="mt-1 text-2xl font-semibold text-red-600">
+                            -{{ formatAmount(summary.expense) }}円
+                        </div>
+                    </div>
+                    <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm font-medium text-gray-500">収支</div>
+                        <div
+                            class="mt-1 text-2xl font-semibold"
+                            :class="balance >= 0 ? 'text-green-600' : 'text-red-600'"
+                        >
+                            {{ balance >= 0 ? '+' : '' }}{{ formatAmount(balance) }}円
+                        </div>
+                    </div>
+                </div>
+
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <!-- 取引一覧テーブル -->
-                        <table v-if="transactions.length > 0" class="min-w-full divide-y divide-gray-200">
+                    <!-- 取引一覧 -->
+                    <div v-if="transactions.length > 0">
+                        <!-- PC: テーブル形式 -->
+                        <table class="hidden md:table min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        日付
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        種別
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        カテゴリ
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        支払元/受取人
-                                    </th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        金額
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        メモ
-                                    </th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        操作
-                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">日付</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">種別</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">カテゴリ</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">支払元</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500">金額</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">メモ</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500">操作</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                <tr v-for="transaction in transactions" :key="transaction.id">
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="transaction in transactions" :key="transaction.id" class="hover:bg-gray-50">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                                         {{ formatDate(transaction.date) }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm">
                                         <span
                                             class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                             :class="typeClass(transaction.type)"
@@ -232,41 +372,73 @@ const submitDelete = () => {
                                             {{ typeLabel(transaction.type) }}
                                         </span>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                                         {{ transaction.category?.name || '-' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                                         {{ payerLabel(transaction.payer) }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-right font-medium"
-                                        :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
+                                    <td
+                                        class="whitespace-nowrap px-4 py-3 text-sm text-right font-medium"
+                                        :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'"
+                                    >
                                         {{ transaction.type === 'income' ? '+' : '-' }}{{ formatAmount(transaction.amount) }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                    <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
                                         {{ transaction.memo || '-' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                        <button
-                                            @click="openEditModal(transaction)"
-                                            class="mr-3 text-indigo-600 hover:text-indigo-900"
-                                        >
-                                            編集
-                                        </button>
-                                        <button
-                                            @click="openDeleteModal(transaction)"
-                                            class="text-red-600 hover:text-red-900"
-                                        >
-                                            削除
-                                        </button>
+                                    <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
+                                        <button @click="openEditModal(transaction)" class="text-indigo-600 hover:text-indigo-900 mr-2">編集</button>
+                                        <button @click="openDeleteModal(transaction)" class="text-red-600 hover:text-red-900">削除</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <!-- 取引がない場合 -->
-                        <div v-else class="text-center py-8 text-gray-500">
-                            取引がありません。「取引を追加」ボタンから追加してください。
-                        </div>
+                        <!-- スマホ: コンパクトリスト形式 -->
+                        <ul class="md:hidden divide-y divide-gray-200">
+                            <li
+                                v-for="transaction in transactions"
+                                :key="transaction.id"
+                                class="p-3 hover:bg-gray-50"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                                        <span
+                                            class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold"
+                                            :class="typeClass(transaction.type)"
+                                        >
+                                            {{ typeLabel(transaction.type) }}
+                                        </span>
+                                        <span class="text-sm font-medium text-gray-900 truncate">
+                                            {{ transaction.category?.name || '-' }}
+                                        </span>
+                                    </div>
+                                    <span
+                                        class="ml-2 text-sm font-bold shrink-0"
+                                        :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'"
+                                    >
+                                        {{ transaction.type === 'income' ? '+' : '-' }}{{ formatAmount(transaction.amount) }}
+                                    </span>
+                                </div>
+                                <div class="mt-1 flex items-center justify-between text-xs text-gray-500">
+                                    <div class="flex items-center gap-2">
+                                        <span>{{ formatDate(transaction.date) }}</span>
+                                        <span>{{ payerLabel(transaction.payer) }}</span>
+                                        <span v-if="transaction.memo" class="truncate max-w-[100px]">{{ transaction.memo }}</span>
+                                    </div>
+                                    <div class="flex gap-3 shrink-0">
+                                        <button @click="openEditModal(transaction)" class="text-indigo-600">編集</button>
+                                        <button @click="openDeleteModal(transaction)" class="text-red-600">削除</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 取引がない場合 -->
+                    <div v-else class="p-8 text-center text-gray-500">
+                        取引がありません。「取引を追加」ボタンから追加してください。
                     </div>
                 </div>
             </div>

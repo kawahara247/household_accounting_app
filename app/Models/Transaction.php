@@ -7,6 +7,8 @@ namespace App\Models;
 use App\Enums\FlowType;
 use App\Enums\PayerType;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -29,6 +31,22 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * フィルター条件を適用するスコープ
+     *
+     * @param Builder<Transaction> $query
+     * @param array{category_id?: int|string|null, payer?: string|null, type?: string|null, memo?: string|null} $filters
+     */
+    #[Scope]
+    protected function filter(Builder $query, array $filters): void
+    {
+        $query
+            ->when($filters['category_id'] ?? null, fn (Builder $q, int|string $categoryId) => $q->where('category_id', $categoryId))
+            ->when($filters['payer'] ?? null, fn (Builder $q, string $payer) => $q->where('payer', $payer))
+            ->when($filters['type'] ?? null, fn (Builder $q, string $type) => $q->where('type', $type))
+            ->when($filters['memo'] ?? null, fn (Builder $q, string $memo) => $q->where('memo', 'like', "%{$memo}%"));
     }
 
     /**

@@ -10,17 +10,31 @@ use App\Http\Requests\TransactionUpdateRequest;
 use App\Models\Category;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class TransactionController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = [
+            'category_id' => $request->input('category_id'),
+            'payer'       => $request->input('payer'),
+            'type'        => $request->input('type'),
+            'memo'        => $request->input('memo'),
+        ];
+
         $transactions = Transaction::with('category')
+            ->filter($filters)
             ->orderBy('date', 'desc')
             ->get();
+
+        $summary = [
+            'income'  => $transactions->where('type', 'income')->sum('amount'),
+            'expense' => $transactions->where('type', 'expense')->sum('amount'),
+        ];
 
         $categories = Category::all();
 
@@ -33,6 +47,8 @@ class TransactionController extends Controller
             'transactions' => $transactions,
             'categories'   => $categories,
             'payers'       => $payers,
+            'filters'      => $filters,
+            'summary'      => $summary,
         ]);
     }
 

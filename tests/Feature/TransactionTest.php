@@ -451,4 +451,347 @@ class TransactionTest extends TestCase
             'id' => $transaction->id,
         ]);
     }
+
+    #[Test]
+    public function カテゴリで取引一覧をフィルタリングできる(): void
+    {
+        // Arrange
+        $user         = User::factory()->create();
+        $categoryFood = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $categoryTransport = Category::create([
+            'name' => '交通費',
+            'type' => FlowType::Expense,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $categoryFood->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Expense,
+            'category_id' => $categoryTransport->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 500,
+        ]);
+
+        // Act: 食費カテゴリでフィルタリング
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'category_id' => $categoryFood->id,
+        ]));
+
+        // Assert: 食費の取引のみ取得される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.category_id', $categoryFood->id)
+        );
+    }
+
+    #[Test]
+    public function 支払元で取引一覧をフィルタリングできる(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 500,
+        ]);
+
+        // Act: PersonAでフィルタリング
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'payer' => 'person_a',
+        ]));
+
+        // Assert: PersonAの取引のみ取得される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.payer', 'person_a')
+        );
+    }
+
+    #[Test]
+    public function 種別で取引一覧をフィルタリングできる(): void
+    {
+        // Arrange
+        $user            = User::factory()->create();
+        $expenseCategory = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $incomeCategory = Category::create([
+            'name' => '給与',
+            'type' => FlowType::Income,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 50000,
+        ]);
+
+        // Act: 収入でフィルタリング
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'type' => 'income',
+        ]));
+
+        // Assert: 収入の取引のみ取得される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.type', 'income')
+        );
+    }
+
+    #[Test]
+    public function メモで取引一覧をフィルタリングできる(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+            'memo'        => 'ランチ代',
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 500,
+            'memo'        => '夕食代',
+        ]);
+
+        // Act: 「ランチ」でフィルタリング（部分一致）
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'memo' => 'ランチ',
+        ]));
+
+        // Assert: ランチを含む取引のみ取得される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.memo', 'ランチ代')
+        );
+    }
+
+    #[Test]
+    public function 複数のフィルターを組み合わせて取引一覧をフィルタリングできる(): void
+    {
+        // Arrange
+        $user         = User::factory()->create();
+        $categoryFood = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $categoryTransport = Category::create([
+            'name' => '交通費',
+            'type' => FlowType::Expense,
+        ]);
+
+        // 食費 + PersonA
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $categoryFood->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+            'memo'        => 'ランチ代',
+        ]);
+        // 食費 + PersonB
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Expense,
+            'category_id' => $categoryFood->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 800,
+            'memo'        => 'ランチ代',
+        ]);
+        // 交通費 + PersonA
+        Transaction::create([
+            'date'        => '2026-01-06',
+            'type'        => FlowType::Expense,
+            'category_id' => $categoryTransport->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 500,
+            'memo'        => '電車代',
+        ]);
+
+        // Act: 食費 + PersonA + メモ「ランチ」でフィルタリング
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'category_id' => $categoryFood->id,
+            'payer'       => 'person_a',
+            'memo'        => 'ランチ',
+        ]));
+
+        // Assert: 条件に合致する取引のみ取得される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.category_id', $categoryFood->id)
+                ->where('transactions.0.payer', 'person_a')
+                ->where('transactions.0.memo', 'ランチ代')
+        );
+    }
+
+    #[Test]
+    public function 取引一覧に収入と支出の合計が表示される(): void
+    {
+        // Arrange
+        $user            = User::factory()->create();
+        $expenseCategory = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $incomeCategory = Category::create([
+            'name' => '給与',
+            'type' => FlowType::Income,
+        ]);
+
+        // 収入: 50000 + 30000 = 80000
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 50000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 30000,
+        ]);
+
+        // 支出: 1000 + 2000 = 3000
+        Transaction::create([
+            'date'        => '2026-01-06',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-07',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 2000,
+        ]);
+
+        // Act
+        $response = $this->actingAs($user)->get(route('transactions.index'));
+
+        // Assert
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 4)
+                ->where('summary.income', 80000)
+                ->where('summary.expense', 3000)
+        );
+    }
+
+    #[Test]
+    public function フィルタリング時は該当する取引のみの合計が表示される(): void
+    {
+        // Arrange
+        $user            = User::factory()->create();
+        $expenseCategory = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $incomeCategory = Category::create([
+            'name' => '給与',
+            'type' => FlowType::Income,
+        ]);
+
+        // PersonAの収入: 50000
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 50000,
+        ]);
+        // PersonBの収入: 30000（フィルタリングで除外）
+        Transaction::create([
+            'date'        => '2026-01-05',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 30000,
+        ]);
+
+        // PersonAの支出: 1000
+        Transaction::create([
+            'date'        => '2026-01-06',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // Act: PersonAでフィルタリング
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'payer' => 'person_a',
+        ]));
+
+        // Assert: PersonAの取引のみの合計
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 2)
+                ->where('summary.income', 50000)
+                ->where('summary.expense', 1000)
+        );
+    }
 }
