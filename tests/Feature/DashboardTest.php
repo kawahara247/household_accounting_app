@@ -211,4 +211,58 @@ class DashboardTest extends TestCase
                 ->where('monthlyBalance.expense', 5000)
         );
     }
+
+    #[Test]
+    public function payer別の月次収支を取得できる(): void
+    {
+        // Arrange: 複数のpayerで収入・支出を作成
+        $user            = User::factory()->create();
+        $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
+        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+
+        $this->travelTo('2026-01-15');
+
+        // PersonA: 収入100,000 - 支出30,000 = 収支70,000
+        Transaction::create([
+            'date'        => '2026-01-10',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 100000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-15',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 30000,
+        ]);
+
+        // PersonB: 収入50,000 - 支出60,000 = 収支-10,000
+        Transaction::create([
+            'date'        => '2026-01-10',
+            'type'        => FlowType::Income,
+            'category_id' => $incomeCategory->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 50000,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-20',
+            'type'        => FlowType::Expense,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonB,
+            'amount'      => 60000,
+        ]);
+
+        // Act: ダッシュボードページにアクセス
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        // Assert: payer別の収支が正しく計算される
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->has('payerBalances')
+                ->where('payerBalances.person_a.balance', 70000)
+                ->where('payerBalances.person_b.balance', -10000)
+        );
+    }
 }

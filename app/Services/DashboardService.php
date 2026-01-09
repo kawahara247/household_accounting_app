@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\FlowType;
+use App\Enums\PayerType;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -79,5 +80,30 @@ class DashboardService
             'expense' => $expense,
             'balance' => $income - $expense,
         ];
+    }
+
+    /**
+     * payer別の月次収支を計算する.
+     *
+     * @param Collection<int, Transaction> $transactions 月間の取引コレクション
+     *
+     * @return array<string, array{label: string, balance: int}> payer値をキーとした収支配列
+     */
+    public function calculatePayerBalances(Collection $transactions): array
+    {
+        $payerBalances = [];
+
+        foreach (PayerType::cases() as $payer) {
+            $payerTransactions = $transactions->where('payer', $payer);
+            $income            = (int) $payerTransactions->where('type', FlowType::Income)->sum('amount');
+            $expense           = (int) $payerTransactions->where('type', FlowType::Expense)->sum('amount');
+
+            $payerBalances[$payer->value] = [
+                'label'   => $payer->label(),
+                'balance' => $income - $expense,
+            ];
+        }
+
+        return $payerBalances;
     }
 }

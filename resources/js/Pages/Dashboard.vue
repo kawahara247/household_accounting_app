@@ -26,6 +26,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    payerBalances: {
+        type: Object,
+        required: true,
+    },
     categories: {
         type: Array,
         required: true,
@@ -248,6 +252,21 @@ const payerLabel = (payerValue) => {
                         <div class="text-xl font-bold"
                              :class="monthlyBalance.balance >= 0 ? 'text-blue-700' : 'text-red-700'">
                             {{ monthlyBalance.balance >= 0 ? '+' : '' }}{{ formatAmount(monthlyBalance.balance) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- payer別月次収支 -->
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                    <div
+                        v-for="(data, payerValue) in payerBalances"
+                        :key="payerValue"
+                        class="rounded-lg bg-gray-50 p-4 text-center"
+                    >
+                        <div class="text-sm text-gray-600">{{ data.label }}</div>
+                        <div class="text-xl font-bold"
+                             :class="data.balance >= 0 ? 'text-blue-700' : 'text-red-700'">
+                            {{ data.balance >= 0 ? '+' : '' }}{{ formatAmount(data.balance) }}
                         </div>
                     </div>
                 </div>

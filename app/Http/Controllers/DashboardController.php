@@ -42,6 +42,7 @@ class DashboardController extends Controller
         $transactions   = $this->dashboardService->getMonthlyTransactions($year, $month);
         $dailyBalances  = $this->dashboardService->calculateDailyBalances($transactions);
         $monthlyBalance = $this->dashboardService->calculateBalance($transactions);
+        $payerBalances  = $this->dashboardService->calculatePayerBalances($transactions);
 
         $categories = Category::all();
         $payers     = collect(PayerType::cases())->map(fn (PayerType $payer) => [
@@ -54,6 +55,7 @@ class DashboardController extends Controller
             'month'          => $month,
             'dailyBalances'  => $dailyBalances,
             'monthlyBalance' => $monthlyBalance,
+            'payerBalances'  => $payerBalances,
             'categories'     => $categories,
             'payers'         => $payers,
         ]);
