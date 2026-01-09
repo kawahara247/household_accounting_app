@@ -21,13 +21,13 @@ class DashboardTest extends TestCase
     #[Test]
     public function 認証済みユーザーはダッシュボードにアクセスできる(): void
     {
-        // Arrange
+        // Arrange: 認証ユーザーを作成
         $user = User::factory()->create();
 
-        // Act
+        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert
+        // Assert: 必要なpropsを含むInertiaページが返される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -44,7 +44,7 @@ class DashboardTest extends TestCase
     #[Test]
     public function 日別の収支合計を取得できる(): void
     {
-        // Arrange
+        // Arrange: 同じ日と異なる日に収入・支出の取引を作成
         $user            = User::factory()->create();
         $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
         $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
@@ -73,10 +73,10 @@ class DashboardTest extends TestCase
             'amount'      => 2000,
         ]);
 
-        // Act
+        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert
+        // Assert: 日別の収入・支出・差引が正しく計算される
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->where('dailyBalances.10.income', 50000)
@@ -91,7 +91,7 @@ class DashboardTest extends TestCase
     #[Test]
     public function 月間の収支合計を取得できる(): void
     {
-        // Arrange
+        // Arrange: 同月内に複数の収入・支出取引を作成
         $user            = User::factory()->create();
         $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
         $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
@@ -120,10 +120,10 @@ class DashboardTest extends TestCase
             'amount'      => 20000,
         ]);
 
-        // Act
+        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert
+        // Assert: 月間の収入・支出・差引の合計が正しく計算される
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->where('monthlyBalance.income', 100000)
@@ -135,7 +135,7 @@ class DashboardTest extends TestCase
     #[Test]
     public function 特定日の取引一覧を取得できる(): void
     {
-        // Arrange
+        // Arrange: 複数日に取引を作成（1/10に2件、1/11に1件）
         $user            = User::factory()->create();
         $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
         $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
@@ -164,10 +164,10 @@ class DashboardTest extends TestCase
             'amount'      => 2000,
         ]);
 
-        // Act
+        // Act: 特定日（1/10）の取引一覧APIを呼び出す
         $response = $this->actingAs($user)->getJson(route('dashboard.transactions', ['date' => '2026-01-10']));
 
-        // Assert
+        // Assert: 指定日の取引のみが返される
         $response->assertOk();
         $response->assertJsonCount(2, 'transactions');
         $response->assertJsonFragment(['id' => $transaction1->id, 'amount' => 50000, 'payer' => 'person_a']);
@@ -177,7 +177,7 @@ class DashboardTest extends TestCase
     #[Test]
     public function 年月を指定してダッシュボードを表示できる(): void
     {
-        // Arrange
+        // Arrange: 異なる月（2025年12月と2026年1月）に取引を作成
         $user            = User::factory()->create();
         $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
 
@@ -198,10 +198,10 @@ class DashboardTest extends TestCase
             'amount'      => 3000,
         ]);
 
-        // Act
+        // Act: 過去の年月（2025年12月）を指定してダッシュボードにアクセス
         $response = $this->actingAs($user)->get(route('dashboard', ['year' => 2025, 'month' => 12]));
 
-        // Assert
+        // Assert: 指定した年月の取引のみが集計される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page

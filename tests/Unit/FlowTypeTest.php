@@ -13,10 +13,10 @@ class FlowTypeTest extends TestCase
     #[Test]
     public function FlowTypeはIncomeとExpenseの2つの値を持つ(): void
     {
-        // Arrange & Act
+        // Arrange & Act: Enumの全ケースを取得
         $cases = FlowType::cases();
 
-        // Assert
+        // Assert: 2つの値（Income, Expense）が定義されている
         $this->assertCount(2, $cases);
         $this->assertSame('income', FlowType::Income->value);
         $this->assertSame('expense', FlowType::Expense->value);
@@ -25,7 +25,9 @@ class FlowTypeTest extends TestCase
     #[Test]
     public function FlowTypeのlabelメソッドは表示名を返す(): void
     {
-        // Act & Assert
+        // Arrange: なし（Enumの静的メソッドをテスト）
+
+        // Act & Assert: labelメソッドが日本語表示名を返す
         $this->assertSame('収入', FlowType::Income->label());
         $this->assertSame('支出', FlowType::Expense->label());
     }

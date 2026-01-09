@@ -21,13 +21,13 @@ class TransactionTest extends TestCase
     #[Test]
     public function Transactionをモデルで作成できる(): void
     {
-        // Arrange
+        // Arrange: 取引に必要なカテゴリを作成
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: Eloquentモデルで取引を作成
         $transaction = Transaction::create([
             'date'        => '2026-01-04',
             'type'        => FlowType::Expense,
@@ -37,7 +37,7 @@ class TransactionTest extends TestCase
             'memo'        => 'ランチ代',
         ]);
 
-        // Assert
+        // Assert: データベースに取引が保存され、日付も正しくキャストされる
         $this->assertDatabaseHas('transactions', [
             'id'          => $transaction->id,
             'type'        => 'expense',
@@ -52,7 +52,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function Transactionはカテゴリとのリレーションを持つ(): void
     {
-        // Arrange
+        // Arrange: カテゴリと取引を作成
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
@@ -65,10 +65,10 @@ class TransactionTest extends TestCase
             'amount'      => 1000,
         ]);
 
-        // Act
+        // Act: リレーション経由でカテゴリを取得
         $relatedCategory = $transaction->category;
 
-        // Assert
+        // Assert: 正しいカテゴリインスタンスが取得できる
         $this->assertInstanceOf(Category::class, $relatedCategory);
         $this->assertSame($category->id, $relatedCategory->id);
     }
@@ -76,7 +76,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 認証済みユーザーは取引一覧を取得できる(): void
     {
-        // Arrange
+        // Arrange: 認証ユーザー、カテゴリ、取引を作成
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
@@ -91,10 +91,10 @@ class TransactionTest extends TestCase
             'memo'        => 'ランチ代',
         ]);
 
-        // Act
+        // Act: 取引一覧ページにアクセス
         $response = $this->actingAs($user)->get(route('transactions.index'));
 
-        // Assert
+        // Assert: 取引・カテゴリ・支払元の情報を含むページが返される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -132,24 +132,26 @@ class TransactionTest extends TestCase
     #[Test]
     public function 未認証ユーザーは取引一覧にアクセスできない(): void
     {
-        // Act
+        // Arrange: 認証なしの状態
+
+        // Act: 取引一覧ページにアクセス
         $response = $this->get(route('transactions.index'));
 
-        // Assert
+        // Assert: ログインページへリダイレクトされる
         $response->assertRedirect(route('login'));
     }
 
     #[Test]
     public function 認証済みユーザーは取引を作成できる(): void
     {
-        // Arrange
+        // Arrange: 認証ユーザーとカテゴリを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 取引作成エンドポイントにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'type'        => 'expense',
@@ -159,7 +161,7 @@ class TransactionTest extends TestCase
             'memo'        => '夕食代',
         ]);
 
-        // Assert
+        // Assert: 一覧にリダイレクトされ、データベースに保存される
         $response->assertRedirect(route('transactions.index'));
         $this->assertDatabaseHas('transactions', [
             'type'        => 'expense',
@@ -173,14 +175,14 @@ class TransactionTest extends TestCase
     #[Test]
     public function 取引作成時にリダイレクト先を指定できる(): void
     {
-        // Arrange
+        // Arrange: 認証ユーザーとカテゴリを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: _redirectパラメータでダッシュボードを指定してPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'type'        => 'expense',
@@ -190,7 +192,7 @@ class TransactionTest extends TestCase
             '_redirect'   => 'dashboard',
         ]);
 
-        // Assert
+        // Assert: 指定先（ダッシュボード）にリダイレクトされ、データは保存される
         $response->assertRedirect(route('dashboard'));
         $this->assertDatabaseHas('transactions', [
             'amount' => 1500,
@@ -200,13 +202,13 @@ class TransactionTest extends TestCase
     #[Test]
     public function 未認証ユーザーは取引を作成できない(): void
     {
-        // Arrange
+        // Arrange: カテゴリを準備（認証なし）
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 認証なしで取引作成を試みる
         $response = $this->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'type'        => 'expense',
@@ -215,7 +217,7 @@ class TransactionTest extends TestCase
             'amount'      => 1500,
         ]);
 
-        // Assert
+        // Assert: ログインページへリダイレクトされ、データは保存されない
         $response->assertRedirect(route('login'));
         $this->assertDatabaseMissing('transactions', [
             'amount' => 1500,
@@ -225,14 +227,14 @@ class TransactionTest extends TestCase
     #[Test]
     public function 取引作成時に日付は必須(): void
     {
-        // Arrange
+        // Arrange: 日付なしの取引データを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 日付を指定せずにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'type'        => 'expense',
             'category_id' => $category->id,
@@ -240,21 +242,21 @@ class TransactionTest extends TestCase
             'amount'      => 1500,
         ]);
 
-        // Assert
+        // Assert: dateフィールドにバリデーションエラーが発生
         $response->assertSessionHasErrors('date');
     }
 
     #[Test]
     public function 取引作成時に種別は必須(): void
     {
-        // Arrange
+        // Arrange: 種別なしの取引データを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 種別を指定せずにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'category_id' => $category->id,
@@ -262,17 +264,17 @@ class TransactionTest extends TestCase
             'amount'      => 1500,
         ]);
 
-        // Assert
+        // Assert: typeフィールドにバリデーションエラーが発生
         $response->assertSessionHasErrors('type');
     }
 
     #[Test]
     public function 取引作成時にカテゴリは必須(): void
     {
-        // Arrange
+        // Arrange: カテゴリIDなしの取引データを準備
         $user = User::factory()->create();
 
-        // Act
+        // Act: カテゴリを指定せずにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'   => '2026-01-04',
             'type'   => 'expense',
@@ -280,21 +282,21 @@ class TransactionTest extends TestCase
             'amount' => 1500,
         ]);
 
-        // Assert
+        // Assert: category_idフィールドにバリデーションエラーが発生
         $response->assertSessionHasErrors('category_id');
     }
 
     #[Test]
     public function 取引作成時に支払元は必須(): void
     {
-        // Arrange
+        // Arrange: 支払元なしの取引データを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 支払元を指定せずにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'type'        => 'expense',
@@ -302,21 +304,21 @@ class TransactionTest extends TestCase
             'amount'      => 1500,
         ]);
 
-        // Assert
+        // Assert: payerフィールドにバリデーションエラーが発生
         $response->assertSessionHasErrors('payer');
     }
 
     #[Test]
     public function 取引作成時に金額は必須(): void
     {
-        // Arrange
+        // Arrange: 金額なしの取引データを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
 
-        // Act
+        // Act: 金額を指定せずにPOST
         $response = $this->actingAs($user)->post(route('transactions.store'), [
             'date'        => '2026-01-04',
             'type'        => 'expense',
@@ -324,14 +326,14 @@ class TransactionTest extends TestCase
             'payer'       => 'person_a',
         ]);
 
-        // Assert
+        // Assert: amountフィールドにバリデーションエラーが発生
         $response->assertSessionHasErrors('amount');
     }
 
     #[Test]
     public function 認証済みユーザーは取引を更新できる(): void
     {
-        // Arrange
+        // Arrange: 既存の取引と更新データを準備
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
@@ -346,7 +348,7 @@ class TransactionTest extends TestCase
             'memo'        => '元のメモ',
         ]);
 
-        // Act
+        // Act: 取引更新エンドポイントにPUT
         $response = $this->actingAs($user)->put(route('transactions.update', $transaction), [
             'date'        => '2026-01-05',
             'type'        => 'expense',
@@ -356,7 +358,7 @@ class TransactionTest extends TestCase
             'memo'        => '更新後のメモ',
         ]);
 
-        // Assert
+        // Assert: 一覧にリダイレクトされ、データベースが更新される
         $response->assertRedirect(route('transactions.index'));
         $this->assertDatabaseHas('transactions', [
             'id'     => $transaction->id,
@@ -369,7 +371,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 未認証ユーザーは取引を更新できない(): void
     {
-        // Arrange
+        // Arrange: 既存の取引と更新データを準備（認証なし）
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
@@ -382,7 +384,7 @@ class TransactionTest extends TestCase
             'amount'      => 1000,
         ]);
 
-        // Act
+        // Act: 認証なしで取引更新を試みる
         $response = $this->put(route('transactions.update', $transaction), [
             'date'        => '2026-01-05',
             'type'        => 'expense',
@@ -391,7 +393,7 @@ class TransactionTest extends TestCase
             'amount'      => 2000,
         ]);
 
-        // Assert
+        // Assert: ログインページへリダイレクトされ、データは更新されない
         $response->assertRedirect(route('login'));
         $this->assertDatabaseHas('transactions', [
             'id'     => $transaction->id,
@@ -402,7 +404,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 認証済みユーザーは取引を削除できる(): void
     {
-        // Arrange
+        // Arrange: 削除対象の取引を作成
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
@@ -416,10 +418,10 @@ class TransactionTest extends TestCase
             'amount'      => 1000,
         ]);
 
-        // Act
+        // Act: 取引削除エンドポイントにDELETE
         $response = $this->actingAs($user)->delete(route('transactions.destroy', $transaction));
 
-        // Assert
+        // Assert: 一覧にリダイレクトされ、データベースから削除される
         $response->assertRedirect(route('transactions.index'));
         $this->assertDatabaseMissing('transactions', [
             'id' => $transaction->id,
@@ -429,7 +431,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 未認証ユーザーは取引を削除できない(): void
     {
-        // Arrange
+        // Arrange: 削除対象の取引を作成（認証なし）
         $category = Category::create([
             'name' => '食費',
             'type' => FlowType::Expense,
@@ -442,10 +444,10 @@ class TransactionTest extends TestCase
             'amount'      => 1000,
         ]);
 
-        // Act
+        // Act: 認証なしで取引削除を試みる
         $response = $this->delete(route('transactions.destroy', $transaction));
 
-        // Assert
+        // Assert: ログインページへリダイレクトされ、データは削除されない
         $response->assertRedirect(route('login'));
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
@@ -455,7 +457,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function カテゴリで取引一覧をフィルタリングできる(): void
     {
-        // Arrange
+        // Arrange: 異なるカテゴリの取引を作成
         $user         = User::factory()->create();
         $categoryFood = Category::create([
             'name' => '食費',
@@ -498,7 +500,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 支払元で取引一覧をフィルタリングできる(): void
     {
-        // Arrange
+        // Arrange: 異なる支払元の取引を作成
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
@@ -537,7 +539,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 種別で取引一覧をフィルタリングできる(): void
     {
-        // Arrange
+        // Arrange: 収入と支出の取引を作成
         $user            = User::factory()->create();
         $expenseCategory = Category::create([
             'name' => '食費',
@@ -580,7 +582,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function メモで取引一覧をフィルタリングできる(): void
     {
-        // Arrange
+        // Arrange: 異なるメモの取引を作成
         $user     = User::factory()->create();
         $category = Category::create([
             'name' => '食費',
@@ -621,7 +623,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 複数のフィルターを組み合わせて取引一覧をフィルタリングできる(): void
     {
-        // Arrange
+        // Arrange: 複数条件のテスト用に様々な組み合わせの取引を作成
         $user         = User::factory()->create();
         $categoryFood = Category::create([
             'name' => '食費',
@@ -667,7 +669,7 @@ class TransactionTest extends TestCase
             'memo'        => 'ランチ',
         ]));
 
-        // Assert: 条件に合致する取引のみ取得される
+        // Assert: 全ての条件に合致する取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -682,7 +684,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function 取引一覧に収入と支出の合計が表示される(): void
     {
-        // Arrange
+        // Arrange: 複数の収入・支出取引を作成（収入:80000、支出:3000）
         $user            = User::factory()->create();
         $expenseCategory = Category::create([
             'name' => '食費',
@@ -725,10 +727,10 @@ class TransactionTest extends TestCase
             'amount'      => 2000,
         ]);
 
-        // Act
+        // Act: 取引一覧ページにアクセス
         $response = $this->actingAs($user)->get(route('transactions.index'));
 
-        // Assert
+        // Assert: summaryに収入・支出の合計が含まれる
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -742,7 +744,7 @@ class TransactionTest extends TestCase
     #[Test]
     public function フィルタリング時は該当する取引のみの合計が表示される(): void
     {
-        // Arrange
+        // Arrange: PersonAとPersonBの取引を作成
         $user            = User::factory()->create();
         $expenseCategory = Category::create([
             'name' => '食費',
@@ -761,7 +763,7 @@ class TransactionTest extends TestCase
             'payer'       => PayerType::PersonA,
             'amount'      => 50000,
         ]);
-        // PersonBの収入: 30000（フィルタリングで除外）
+        // PersonBの収入: 30000（フィルタリングで除外される）
         Transaction::create([
             'date'        => '2026-01-05',
             'type'        => FlowType::Income,
@@ -784,7 +786,7 @@ class TransactionTest extends TestCase
             'payer' => 'person_a',
         ]));
 
-        // Assert: PersonAの取引のみの合計
+        // Assert: PersonAの取引のみの合計が表示される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
