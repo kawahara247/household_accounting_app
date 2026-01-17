@@ -1,0 +1,27 @@
+app = "household-accounting-app"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  APP_ENV = "production"
+  APP_DEBUG = "true"
+  CACHE_STORE = "file"
+
+[deploy]
+  release_command = "sh -c 'php artisan migrate --force && php artisan optimize:clear'"
+
+[[services]]
+  internal_port = 80
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+[[mounts]]
+  source = "data_vol"
+  destination = "/var/www/html/database-data"

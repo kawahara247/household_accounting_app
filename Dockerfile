@@ -4,6 +4,7 @@ FROM php:8.5-apache
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    apache2-utils \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -31,10 +32,29 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Set working directory
 WORKDIR /var/www/html
 
+# 全部コピー
+COPY . .
+
+# Laravel依存パッケージ
+RUN composer install --no-dev --optimize-autoloader
+RUN npm install && npm run build
+
+# SQLiteファイルがなければ作る
+RUN if [ ! -f database-data/database.sqlite ]; then mkdir -p database-data && touch database-data/database.sqlite; fi
+
+# 権限
+RUN chown -R www-data:www-data storage bootstrap/cache database-data
+
 # Copy Apache configuration
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# Entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
