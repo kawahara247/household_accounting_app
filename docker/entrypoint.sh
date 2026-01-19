@@ -21,4 +21,8 @@ if [[ $# -gt 0 ]]; then
   exec "$@"
 fi
 
+# Laravel Schedulerをバックグラウンドで起動
+cd /var/www/html
+php artisan schedule:work >> /var/www/html/storage/logs/scheduler.log 2>&1 &
+
 exec apache2-foreground
