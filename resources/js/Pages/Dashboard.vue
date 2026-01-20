@@ -43,6 +43,20 @@ const props = defineProps({
 // 曜日ラベル
 const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
 
+// 今日の日付
+const today = new Date();
+const todayYear = today.getFullYear();
+const todayMonth = today.getMonth() + 1;
+const todayDate = today.getDate();
+
+const isToday = (dayData) => {
+    return dayData.isCurrentMonth
+        && dayData.day
+        && props.year === todayYear
+        && props.month === todayMonth
+        && dayData.day === todayDate;
+};
+
 // カレンダーデータを生成
 const calendarDays = computed(() => {
     const firstDay = new Date(props.year, props.month - 1, 1);
@@ -324,6 +338,7 @@ const payerLabel = (payerValue) => {
                             class="min-h-24 border-b border-r p-2"
                             :class="{
                                 'bg-gray-50': !dayData.isCurrentMonth,
+                                'bg-blue-50 ring-2 ring-blue-300 ring-inset': isToday(dayData),
                                 'cursor-pointer hover:bg-blue-50': dayData.isCurrentMonth && dayData.day,
                             }"
                             @click="dayData.isCurrentMonth && openDayModal(dayData)"
