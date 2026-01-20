@@ -43,12 +43,12 @@ class RecurringTransactionTest extends TestCase
         // Assert: 定期取引・カテゴリ・支払元の情報を含むページが返される
         $response->assertOk();
         $response->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('RecurringTransactions/Index')
                 ->has('recurringTransactions', 1)
                 ->has(
                     'recurringTransactions.0',
-                    fn(Assert $recurring) => $recurring
+                    fn (Assert $recurring) => $recurring
                         ->has('id')
                         ->where('name', '家賃')
                         ->where('day_of_month', 25)

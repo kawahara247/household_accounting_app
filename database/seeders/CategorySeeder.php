@@ -22,7 +22,7 @@ class CategorySeeder extends Seeder
             ['name' => '家賃', 'type' => FlowType::Expense],
             ['name' => '衛生用品', 'type' => FlowType::Expense],
             ['name' => '雑貨', 'type' => FlowType::Expense],
-            ['name' => '特別な出費', 'type' => FlowType::Expense],
+            ['name' => 'その他支出', 'type' => FlowType::Expense],
             // 収入カテゴリ
             ['name' => '給与', 'type' => FlowType::Income],
             ['name' => '賞与', 'type' => FlowType::Income],
