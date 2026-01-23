@@ -21,7 +21,7 @@ class TransactionController extends Controller
     {
         // デフォルトで現在の年月を使用
         $defaultYearMonth = now()->format('Y-m');
-        
+
         $filters = [
             'category_id' => $request->input('category_id'),
             'payer'       => $request->input('payer'),
@@ -69,13 +69,17 @@ class TransactionController extends Controller
     {
         $transaction->update($request->validated());
 
-        return Redirect::route('transactions.index');
+        $redirect = $request->input('_redirect', 'transactions.index');
+
+        return Redirect::route($redirect);
     }
 
-    public function destroy(Transaction $transaction): RedirectResponse
+    public function destroy(Request $request, Transaction $transaction): RedirectResponse
     {
         $transaction->delete();
 
-        return Redirect::route('transactions.index');
+        $redirect = $request->input('_redirect', 'transactions.index');
+
+        return Redirect::route($redirect);
     }
 }

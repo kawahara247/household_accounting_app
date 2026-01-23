@@ -26,3 +26,6 @@ CLAUDE.md
 .php-cs-fixer.cache
 .mcp.json
 kakeibo-project-spec.md
+
+# Terminal Paste Image folder
+.cp-images/

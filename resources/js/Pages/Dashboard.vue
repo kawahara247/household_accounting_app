@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
@@ -181,6 +182,24 @@ const createForm = useForm({
     _redirect: 'dashboard',
 });
 
+// 取引編集モーダル
+const showEditModal = ref(false);
+const editingTransaction = ref(null);
+
+const editForm = useForm({
+    date: '',
+    type: 'expense',
+    category_id: '',
+    payer: '',
+    amount: '',
+    memo: '',
+    _redirect: 'dashboard',
+});
+
+// 取引削除モーダル
+const showDeleteModal = ref(false);
+const deletingTransaction = ref(null);
+
 // フィルタリングされたカテゴリ
 const filteredCategories = computed(() => {
     return props.categories.filter(cat => cat.type === createForm.type);
@@ -231,6 +250,73 @@ const payerLabel = (payerValue) => {
     const payer = props.payers.find(p => p.value === payerValue);
     return payer ? payer.label : payerValue;
 };
+
+// 編集モーダルを開く
+const openEditModal = (transaction) => {
+    editingTransaction.value = transaction;
+    editForm.date = transaction.date;
+    editForm.type = transaction.type;
+    editForm.category_id = transaction.category_id;
+    editForm.payer = transaction.payer;
+    editForm.amount = transaction.amount;
+    editForm.memo = transaction.memo || '';
+    editForm.clearErrors();
+    showEditModal.value = true;
+};
+
+// 編集モーダルを閉じる
+const closeEditModal = () => {
+    showEditModal.value = false;
+    editingTransaction.value = null;
+    editForm.reset();
+};
+
+// 編集フォーム送信
+const submitEdit = () => {
+    editForm.put(route('transactions.update', editingTransaction.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeEditModal();
+            closeDayModal();
+            router.reload();
+        },
+    });
+};
+
+// 削除モーダルを開く
+const openDeleteModal = (transaction) => {
+    deletingTransaction.value = transaction;
+    showDeleteModal.value = true;
+};
+
+// 削除モーダルを閉じる
+const closeDeleteModal = () => {
+    showDeleteModal.value = false;
+    deletingTransaction.value = null;
+};
+
+// 削除実行
+const confirmDelete = () => {
+    router.delete(route('transactions.destroy', deletingTransaction.value.id), {
+        data: { _redirect: 'dashboard' },
+        preserveScroll: true,
+        onSuccess: () => {
+            closeDeleteModal();
+            closeDayModal();
+            router.reload();
+        },
+    });
+};
+
+// 編集時の種別変更ハンドラ
+const onEditTypeChange = () => {
+    editForm.category_id = '';
+};
+
+// フィルタリングされた編集用カテゴリ
+const filteredEditCategories = computed(() => {
+    return props.categories.filter(cat => cat.type === editForm.type);
+});
 </script>
 
 <template>
@@ -388,27 +474,33 @@ const payerLabel = (payerValue) => {
                     この日の取引はありません
                 </div>
 
-                <div v-else class="mt-6">
+                <div v-else class="mt-6 overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
                                     種別
                                 </th>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
                                     カテゴリ
                                 </th>
-                                <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                <th class="hidden px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:table-cell sm:px-4">
                                     支払元
                                 </th>
-                                <th class="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                <th class="px-2 py-2 text-right text-xs font-medium uppercase text-gray-500 sm:px-4">
                                     金額
+                                </th>
+                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
+                                    メモ
+                                </th>
+                                <th class="px-2 py-2 text-center text-xs font-medium uppercase text-gray-500 sm:px-4">
+                                    操作
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
                             <tr v-for="transaction in selectedDayTransactions" :key="transaction.id">
-                                <td class="whitespace-nowrap px-4 py-2 text-sm">
+                                <td class="whitespace-nowrap px-2 py-2 text-sm sm:px-4">
                                     <span
                                         class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                         :class="typeClass(transaction.type)"
@@ -416,15 +508,34 @@ const payerLabel = (payerValue) => {
                                         {{ typeLabel(transaction.type) }}
                                     </span>
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900">
+                                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900 sm:px-4">
                                     {{ transaction.category?.name || '-' }}
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900">
+                                <td class="hidden whitespace-nowrap px-2 py-2 text-sm text-gray-900 sm:table-cell sm:px-4">
                                     {{ payerLabel(transaction.payer) }}
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-2 text-sm text-right font-medium"
+                                <td class="whitespace-nowrap px-2 py-2 text-sm text-right font-medium sm:px-4"
                                     :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
                                     {{ transaction.type === 'income' ? '+' : '-' }}{{ formatAmount(transaction.amount) }}
+                                </td>
+                                <td class="px-2 py-2 text-sm text-gray-900 sm:px-4">
+                                    <div class="max-w-[120px] break-words">
+                                        {{ transaction.memo || '-' }}
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-2 py-2 text-sm text-center sm:px-4">
+                                    <button
+                                        @click="openEditModal(transaction)"
+                                        class="mr-2 text-indigo-600 hover:text-indigo-900"
+                                    >
+                                        編集
+                                    </button>
+                                    <button
+                                        @click="openDeleteModal(transaction)"
+                                        class="text-red-600 hover:text-red-900"
+                                    >
+                                        削除
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -556,6 +667,176 @@ const payerLabel = (payerValue) => {
                     </PrimaryButton>
                 </div>
             </form>
+        </Modal>
+
+        <!-- 取引編集モーダル -->
+        <Modal :show="showEditModal" @close="closeEditModal" max-width="md">
+            <form @submit.prevent="submitEdit" class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    取引を編集
+                </h2>
+
+                <div class="mt-6">
+                    <InputLabel for="edit-date" value="日付" />
+                    <input
+                        id="edit-date"
+                        v-model="editForm.date"
+                        type="date"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                    <InputError :message="editForm.errors.date" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel value="種別" />
+                    <div class="mt-2 flex gap-6">
+                        <label class="inline-flex items-center">
+                            <input
+                                type="radio"
+                                v-model="editForm.type"
+                                value="expense"
+                                @change="onEditTypeChange"
+                                class="rounded-full border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                            />
+                            <span class="ml-2 text-sm text-gray-700">支出</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input
+                                type="radio"
+                                v-model="editForm.type"
+                                value="income"
+                                @change="onEditTypeChange"
+                                class="rounded-full border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                            />
+                            <span class="ml-2 text-sm text-gray-700">収入</span>
+                        </label>
+                    </div>
+                    <InputError :message="editForm.errors.type" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="edit-category" value="カテゴリ" />
+                    <select
+                        id="edit-category"
+                        v-model="editForm.category_id"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option value="">選択してください</option>
+                        <option
+                            v-for="category in filteredEditCategories"
+                            :key="category.id"
+                            :value="category.id"
+                        >
+                            {{ category.name }}
+                        </option>
+                    </select>
+                    <InputError :message="editForm.errors.category_id" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="edit-payer" :value="editForm.type === 'income' ? '受取人' : '支払元'" />
+                    <select
+                        id="edit-payer"
+                        v-model="editForm.payer"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option value="">選択してください</option>
+                        <option
+                            v-for="payer in payers"
+                            :key="payer.value"
+                            :value="payer.value"
+                        >
+                            {{ payer.label }}
+                        </option>
+                    </select>
+                    <InputError :message="editForm.errors.payer" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="edit-amount" value="金額" />
+                    <TextInput
+                        id="edit-amount"
+                        v-model="editForm.amount"
+                        type="number"
+                        min="1"
+                        class="mt-1 block w-full"
+                        placeholder="例: 1000"
+                    />
+                    <InputError :message="editForm.errors.amount" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="edit-memo" value="メモ（任意）" />
+                    <TextInput
+                        id="edit-memo"
+                        v-model="editForm.memo"
+                        type="text"
+                        class="mt-1 block w-full"
+                        placeholder="例: ランチ代"
+                    />
+                    <InputError :message="editForm.errors.memo" class="mt-2" />
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeEditModal">
+                        キャンセル
+                    </SecondaryButton>
+                    <PrimaryButton :disabled="editForm.processing">
+                        更新
+                    </PrimaryButton>
+                </div>
+            </form>
+        </Modal>
+
+        <!-- 取引削除確認モーダル -->
+        <Modal :show="showDeleteModal" @close="closeDeleteModal" max-width="md">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    取引を削除
+                </h2>
+
+                <p class="mt-4 text-sm text-gray-600">
+                    本当にこの取引を削除しますか？この操作は取り消せません。
+                </p>
+
+                <div v-if="deletingTransaction" class="mt-4 rounded-lg bg-gray-50 p-4">
+                    <div class="text-sm">
+                        <div class="mb-2">
+                            <span class="font-medium">種別:</span>
+                            <span
+                                class="ml-2 inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                :class="typeClass(deletingTransaction.type)"
+                            >
+                                {{ typeLabel(deletingTransaction.type) }}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-medium">カテゴリ:</span>
+                            <span class="ml-2">{{ deletingTransaction.category?.name || '-' }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-medium">金額:</span>
+                            <span class="ml-2 font-bold"
+                                  :class="deletingTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
+                                {{ deletingTransaction.type === 'income' ? '+' : '-' }}{{ formatAmount(deletingTransaction.amount) }}
+                            </span>
+                        </div>
+                        <div v-if="deletingTransaction.memo">
+                            <span class="font-medium">メモ:</span>
+                            <span class="ml-2">{{ deletingTransaction.memo }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeDeleteModal">
+                        キャンセル
+                    </SecondaryButton>
+                    <DangerButton @click="confirmDelete">
+                        削除
+                    </DangerButton>
+                </div>
+            </div>
         </Modal>
     </AuthenticatedLayout>
 </template>
