@@ -14,7 +14,7 @@ app = "household-accounting-app"
 [[services]]
   internal_port = 80
   protocol = "tcp"
-  memory = "512mb"
+  memory = "1gb"
 
   [[services.ports]]
     handlers = ["http"]
