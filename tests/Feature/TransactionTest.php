@@ -97,12 +97,12 @@ class TransactionTest extends TestCase
         // Assert: 取引・カテゴリ・支払元の情報を含むページが返される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->has(
                     'transactions.0',
-                    fn (Assert $transaction) => $transaction
+                    fn(Assert $transaction) => $transaction
                         ->has('id')
                         ->where('type', 'expense')
                         ->where('payer', 'person_a')
@@ -114,7 +114,7 @@ class TransactionTest extends TestCase
                 ->has('categories', 1)
                 ->has(
                     'categories.0',
-                    fn (Assert $cat) => $cat
+                    fn(Assert $cat) => $cat
                         ->where('name', '食費')
                         ->where('type', 'expense')
                         ->etc()
@@ -122,7 +122,7 @@ class TransactionTest extends TestCase
                 ->has('payers', 2)
                 ->has(
                     'payers.0',
-                    fn (Assert $payer) => $payer
+                    fn(Assert $payer) => $payer
                         ->has('value')
                         ->has('label')
                 )
@@ -490,7 +490,7 @@ class TransactionTest extends TestCase
         // Assert: 食費の取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->where('transactions.0.category_id', $categoryFood->id)
@@ -529,7 +529,7 @@ class TransactionTest extends TestCase
         // Assert: PersonAの取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->where('transactions.0.payer', 'person_a')
@@ -572,7 +572,7 @@ class TransactionTest extends TestCase
         // Assert: 収入の取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->where('transactions.0.type', 'income')
@@ -613,7 +613,7 @@ class TransactionTest extends TestCase
         // Assert: ランチを含む取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->where('transactions.0.memo', 'ランチ代')
@@ -672,7 +672,7 @@ class TransactionTest extends TestCase
         // Assert: 全ての条件に合致する取引のみ取得される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 1)
                 ->where('transactions.0.category_id', $categoryFood->id)
@@ -733,7 +733,7 @@ class TransactionTest extends TestCase
         // Assert: summaryに収入・支出の合計が含まれる
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 4)
                 ->where('summary.income', 80000)
@@ -789,11 +789,156 @@ class TransactionTest extends TestCase
         // Assert: PersonAの取引のみの合計が表示される
         $response->assertOk();
         $response->assertInertia(
-            fn (Assert $page) => $page
+            fn(Assert $page) => $page
                 ->component('Transactions/Index')
                 ->has('transactions', 2)
                 ->where('summary.income', 50000)
                 ->where('summary.expense', 1000)
+        );
+    }
+
+    #[Test]
+    public function 取引一覧は年月フィルターパラメータを受け取る(): void
+    {
+        // Arrange: 認証ユーザーと複数月の取引を作成
+        $user = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+
+        // 2026年1月の取引
+        Transaction::create([
+            'date'        => '2026-01-10',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // 2026年2月の取引
+        Transaction::create([
+            'date'        => '2026-02-10',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 2000,
+        ]);
+
+        // Act: 年月フィルターで2026年1月を指定
+        $response = $this->actingAs($user)->get(route('transactions.index', ['year_month' => '2026-01']));
+
+        // Assert: 指定月の取引のみが返される
+        $response->assertOk();
+        $response->assertInertia(
+            fn(Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.amount', 1000)
+                ->where('filters.year_month', '2026-01')
+        );
+    }
+
+    #[Test]
+    public function 取引一覧はデフォルトで現在の年月でフィルターされる(): void
+    {
+        // Arrange: 認証ユーザーと複数月の取引を作成
+        $user = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+
+        // 現在の年月の取引
+        $currentYearMonth = now()->format('Y-m');
+        Transaction::create([
+            'date'        => now()->format('Y-m-d'),
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 3000,
+        ]);
+
+        // 過去の年月の取引
+        Transaction::create([
+            'date'        => now()->subMonth()->format('Y-m-d'),
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 5000,
+        ]);
+
+        // Act: フィルターパラメータなしで取得
+        $response = $this->actingAs($user)->get(route('transactions.index'));
+
+        // Assert: 現在の年月の取引のみが返される
+        $response->assertOk();
+        $response->assertInertia(
+            fn(Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.amount', 3000)
+                ->where('filters.year_month', $currentYearMonth)
+        );
+    }
+
+    #[Test]
+    public function 年月フィルターは他のフィルターと組み合わせられる(): void
+    {
+        // Arrange: 認証ユーザーと複数のカテゴリ・月の取引を作成
+        $user = User::factory()->create();
+        $foodCategory = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $transportCategory = Category::create([
+            'name' => '交通費',
+            'type' => FlowType::Expense,
+        ]);
+
+        // 2026年1月・食費
+        Transaction::create([
+            'date'        => '2026-01-10',
+            'type'        => FlowType::Expense,
+            'category_id' => $foodCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // 2026年1月・交通費
+        Transaction::create([
+            'date'        => '2026-01-15',
+            'type'        => FlowType::Expense,
+            'category_id' => $transportCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 500,
+        ]);
+
+        // 2026年2月・食費
+        Transaction::create([
+            'date'        => '2026-02-10',
+            'type'        => FlowType::Expense,
+            'category_id' => $foodCategory->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 2000,
+        ]);
+
+        // Act: 年月と カテゴリの両方でフィルター
+        $response = $this->actingAs($user)->get(route('transactions.index', [
+            'year_month'  => '2026-01',
+            'category_id' => $foodCategory->id,
+        ]));
+
+        // Assert: 指定月かつ指定カテゴリの取引のみが返される
+        $response->assertOk();
+        $response->assertInertia(
+            fn(Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.amount', 1000)
+                ->where('transactions.0.category_id', $foodCategory->id)
+                ->where('filters.year_month', '2026-01')
+                ->where('filters.category_id', $foodCategory->id)
         );
     }
 }

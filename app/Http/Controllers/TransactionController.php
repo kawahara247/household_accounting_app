@@ -19,11 +19,15 @@ class TransactionController extends Controller
 {
     public function index(Request $request): Response
     {
+        // デフォルトで現在の年月を使用
+        $defaultYearMonth = now()->format('Y-m');
+        
         $filters = [
             'category_id' => $request->input('category_id'),
             'payer'       => $request->input('payer'),
             'type'        => $request->input('type'),
             'memo'        => $request->input('memo'),
+            'year_month'  => $request->input('year_month', $defaultYearMonth),
         ];
 
         $transactions = Transaction::with('category')

@@ -36,12 +36,16 @@ const props = defineProps({
 // 今日の日付
 const today = new Date().toISOString().split('T')[0];
 
+// 現在の年月
+const currentYearMonth = new Date().toISOString().slice(0, 7);
+
 // フィルター状態
 const filterForm = reactive({
     category_id: props.filters.category_id || '',
     payer: props.filters.payer || '',
     type: props.filters.type || '',
     memo: props.filters.memo || '',
+    year_month: props.filters.year_month || currentYearMonth,
 });
 
 // フィルター適用
@@ -51,6 +55,7 @@ const applyFilters = () => {
     if (filterForm.payer) params.payer = filterForm.payer;
     if (filterForm.type) params.type = filterForm.type;
     if (filterForm.memo) params.memo = filterForm.memo;
+    if (filterForm.year_month) params.year_month = filterForm.year_month;
 
     router.get(route('transactions.index'), params, {
         preserveState: true,
@@ -64,6 +69,7 @@ const resetFilters = () => {
     filterForm.payer = '';
     filterForm.type = '';
     filterForm.memo = '';
+    filterForm.year_month = currentYearMonth;
     router.get(route('transactions.index'), {}, {
         preserveState: true,
         preserveScroll: true,
@@ -72,7 +78,7 @@ const resetFilters = () => {
 
 // フィルターが適用されているかどうか
 const hasFilters = computed(() => {
-    return filterForm.category_id || filterForm.payer || filterForm.type || filterForm.memo;
+    return filterForm.category_id || filterForm.payer || filterForm.type || filterForm.memo || (filterForm.year_month !== currentYearMonth);
 });
 
 // 収支差額
@@ -245,7 +251,17 @@ const submitDelete = () => {
                 <!-- フィルターセクション -->
                 <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
+                            <div>
+                                <label for="filter-year-month" class="block text-sm font-medium text-gray-700">年月</label>
+                                <input
+                                    id="filter-year-month"
+                                    v-model="filterForm.year_month"
+                                    type="month"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                />
+                            </div>
+
                             <div>
                                 <label for="filter-category" class="block text-sm font-medium text-gray-700">カテゴリ</label>
                                 <select
