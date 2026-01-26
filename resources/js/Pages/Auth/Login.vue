@@ -20,6 +20,7 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
+    trust_device: false,
 });
 
 const submit = () => {
@@ -74,6 +75,15 @@ const submit = () => {
                     <Checkbox name="remember" v-model:checked="form.remember" />
                     <span class="ms-2 text-sm text-gray-600"
                         >Remember me</span
+                    >
+                </label>
+            </div>
+
+            <div class="mt-2 block">
+                <label class="flex items-center">
+                    <Checkbox name="trust_device" v-model:checked="form.trust_device" />
+                    <span class="ms-2 text-sm text-gray-600"
+                        >このデバイスを信頼する（1年間自動ログイン）</span
                     >
                 </label>
             </div>

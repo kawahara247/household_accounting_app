@@ -6,10 +6,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\TrustedDevice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +37,24 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $response = redirect()->intended(route('dashboard', absolute: false));
+
+        // 「このデバイスを信頼する」がチェックされている場合
+        if ($request->boolean('trust_device')) {
+            $token = Str::random(64);
+
+            TrustedDevice::create([
+                'user_id'     => Auth::id(),
+                'token'       => $token,
+                'device_name' => $request->userAgent(),
+                'expires_at'  => now()->addYear(),
+            ]);
+
+            // Cookieにトークンを保存（1年間有効）
+            $response->cookie('device_token', $token, 525600);
+        }
+
+        return $response;
     }
 
     /**
@@ -43,12 +62,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // デバイストークンがあれば削除
+        $deviceToken = $request->cookie('device_token');
+        if ($deviceToken) {
+            TrustedDevice::where('token', $deviceToken)->delete();
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->withCookie(cookie()->forget('device_token'));
     }
 }
