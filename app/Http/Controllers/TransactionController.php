@@ -22,8 +22,10 @@ class TransactionController extends Controller
         // デフォルトで現在の年月を使用
         $defaultYearMonth = now()->format('Y-m');
 
+        $categoryId = $request->input('category_id');
+
         $filters = [
-            'category_id' => $request->input('category_id'),
+            'category_id' => $categoryId !== null ? (int) $categoryId : null,
             'payer'       => $request->input('payer'),
             'type'        => $request->input('type'),
             'memo'        => $request->input('memo'),
