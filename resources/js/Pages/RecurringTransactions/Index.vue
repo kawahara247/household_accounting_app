@@ -392,6 +392,7 @@ const submitDelete = () => {
                         id="create-amount"
                         v-model="createForm.amount"
                         type="number"
+                        inputmode="numeric"
                         min="1"
                         class="mt-1 block w-full"
                         placeholder="例: 80000"
@@ -526,6 +527,7 @@ const submitDelete = () => {
                         id="edit-amount"
                         v-model="editForm.amount"
                         type="number"
+                        inputmode="numeric"
                         min="1"
                         class="mt-1 block w-full"
                     />
