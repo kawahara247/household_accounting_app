@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import CalculatorInput from '@/Components/CalculatorInput.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -388,13 +389,9 @@ const submitDelete = () => {
 
                 <div class="mt-4">
                     <InputLabel for="create-amount" value="金額" />
-                    <TextInput
+                    <CalculatorInput
                         id="create-amount"
                         v-model="createForm.amount"
-                        type="number"
-                        inputmode="numeric"
-                        min="1"
-                        class="mt-1 block w-full"
                         placeholder="例: 80000"
                     />
                     <InputError :message="createForm.errors.amount" class="mt-2" />
@@ -523,13 +520,9 @@ const submitDelete = () => {
 
                 <div class="mt-4">
                     <InputLabel for="edit-amount" value="金額" />
-                    <TextInput
+                    <CalculatorInput
                         id="edit-amount"
                         v-model="editForm.amount"
-                        type="number"
-                        inputmode="numeric"
-                        min="1"
-                        class="mt-1 block w-full"
                     />
                     <InputError :message="editForm.errors.amount" class="mt-2" />
                 </div>
