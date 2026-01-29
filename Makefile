@@ -33,7 +33,7 @@ check:
 	@echo "──────────────────────────────────────────────────────────────────" >> $(CHECK_LOG)
 	@echo "  [3/3] Analyse (PHPStan)" >> $(CHECK_LOG)
 	@echo "──────────────────────────────────────────────────────────────────" >> $(CHECK_LOG)
-	@docker-compose exec -T app ./vendor/bin/phpstan analyse --memory-limit=512M --no-progress --no-ansi 2>&1 | grep -E "(\[OK\]|\[ERROR\]|ERROR|Line)" | tee -a $(CHECK_LOG)
+	@docker-compose exec -T app ./vendor/bin/phpstan analyse --memory-limit=512M 2>&1 | tee -a $(CHECK_LOG)
 	@echo "" >> $(CHECK_LOG)
 	@echo "══════════════════════════════════════════════════════════════════" >> $(CHECK_LOG)
 	@echo "  Check completed!" >> $(CHECK_LOG)
