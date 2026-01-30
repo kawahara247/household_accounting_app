@@ -324,14 +324,6 @@ const filteredEditCategories = computed(() => {
     <Head title="ダッシュボード" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    ダッシュボード
-                </h2>
-            </div>
-        </template>
-
         <div class="py-6">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- 月間収支サマリー -->
@@ -475,72 +467,114 @@ const filteredEditCategories = computed(() => {
                     この日の取引はありません
                 </div>
 
-                <div v-else class="mt-6 overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
-                                    種別
-                                </th>
-                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
-                                    カテゴリ
-                                </th>
-                                <th class="hidden px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:table-cell sm:px-4">
-                                    支払元
-                                </th>
-                                <th class="px-2 py-2 text-right text-xs font-medium uppercase text-gray-500 sm:px-4">
-                                    金額
-                                </th>
-                                <th class="px-2 py-2 text-left text-xs font-medium uppercase text-gray-500 sm:px-4">
-                                    メモ
-                                </th>
-                                <th class="px-2 py-2 text-center text-xs font-medium uppercase text-gray-500 sm:px-4">
-                                    操作
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="transaction in selectedDayTransactions" :key="transaction.id">
-                                <td class="whitespace-nowrap px-2 py-2 text-sm sm:px-4">
+                <div v-else class="mt-6">
+                    <!-- PC: テーブル形式 -->
+                    <div class="hidden overflow-x-auto sm:block">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        種別
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        カテゴリ
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        支払元/受取人
+                                    </th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase text-gray-500">
+                                        金額
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                                        メモ
+                                    </th>
+                                    <th class="px-4 py-2 text-center text-xs font-medium uppercase text-gray-500">
+                                        操作
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <tr v-for="transaction in selectedDayTransactions" :key="transaction.id">
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm">
+                                        <span
+                                            class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                            :class="typeClass(transaction.type)"
+                                        >
+                                            {{ typeLabel(transaction.type) }}
+                                        </span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900">
+                                        {{ transaction.category?.name || '-' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-gray-900">
+                                        {{ payerLabel(transaction.payer) }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-right font-medium"
+                                        :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
+                                        {{ transaction.type === 'income' ? '+' : '-' }}{{ formatAmount(transaction.amount) }}
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-900">
+                                        <div class="max-w-[120px] break-words">
+                                            {{ transaction.memo || '-' }}
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-sm text-center">
+                                        <button
+                                            @click="openEditModal(transaction)"
+                                            class="mr-2 text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            編集
+                                        </button>
+                                        <button
+                                            @click="openDeleteModal(transaction)"
+                                            class="text-red-600 hover:text-red-900"
+                                        >
+                                            削除
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- スマホ: コンパクトリスト形式 -->
+                    <ul class="divide-y divide-gray-200 sm:hidden">
+                        <li
+                            v-for="transaction in selectedDayTransactions"
+                            :key="transaction.id"
+                            class="p-3 hover:bg-gray-50"
+                        >
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2 min-w-0 flex-1">
                                     <span
-                                        class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                        class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold"
                                         :class="typeClass(transaction.type)"
                                     >
                                         {{ typeLabel(transaction.type) }}
                                     </span>
-                                </td>
-                                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900 sm:px-4">
-                                    {{ transaction.category?.name || '-' }}
-                                </td>
-                                <td class="hidden whitespace-nowrap px-2 py-2 text-sm text-gray-900 sm:table-cell sm:px-4">
-                                    {{ payerLabel(transaction.payer) }}
-                                </td>
-                                <td class="whitespace-nowrap px-2 py-2 text-sm text-right font-medium sm:px-4"
-                                    :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'">
+                                    <span class="text-sm font-medium text-gray-900 truncate">
+                                        {{ transaction.category?.name || '-' }}
+                                    </span>
+                                </div>
+                                <span
+                                    class="ml-2 text-sm font-bold shrink-0"
+                                    :class="transaction.type === 'income' ? 'text-green-600' : 'text-red-600'"
+                                >
                                     {{ transaction.type === 'income' ? '+' : '-' }}{{ formatAmount(transaction.amount) }}
-                                </td>
-                                <td class="px-2 py-2 text-sm text-gray-900 sm:px-4">
-                                    <div class="max-w-[120px] break-words">
-                                        {{ transaction.memo || '-' }}
-                                    </div>
-                                </td>
-                                <td class="whitespace-nowrap px-2 py-2 text-sm text-center sm:px-4">
-                                    <button
-                                        @click="openEditModal(transaction)"
-                                        class="mr-2 text-indigo-600 hover:text-indigo-900"
-                                    >
-                                        編集
-                                    </button>
-                                    <button
-                                        @click="openDeleteModal(transaction)"
-                                        class="text-red-600 hover:text-red-900"
-                                    >
-                                        削除
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </span>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between text-xs text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    <span>{{ payerLabel(transaction.payer) }}</span>
+                                    <span v-if="transaction.memo" class="truncate max-w-[100px]">{{ transaction.memo }}</span>
+                                </div>
+                                <div class="flex gap-3 shrink-0">
+                                    <button @click="openEditModal(transaction)" class="text-indigo-600">編集</button>
+                                    <button @click="openDeleteModal(transaction)" class="text-red-600">削除</button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
 
                 <div class="mt-6 flex justify-end">
