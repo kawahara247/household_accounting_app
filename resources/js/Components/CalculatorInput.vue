@@ -193,7 +193,7 @@ const numberButtons = [
         <div
             ref="inputRef"
             @click="openCalculator"
-            class="mt-1 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            class="mt-1 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 touch-manipulation"
         >
             <span v-if="formattedModelValue" class="text-gray-900">
                 {{ formattedModelValue }}
@@ -231,7 +231,7 @@ const numberButtons = [
                         :key="op.value"
                         @click="performOperation(op.value)"
                         type="button"
-                        class="h-12 rounded-md bg-gray-200 text-lg font-medium text-gray-700 transition hover:bg-gray-300 active:bg-gray-400"
+                        class="h-12 rounded-md bg-gray-200 text-lg font-medium text-gray-700 transition hover:bg-gray-300 active:bg-gray-400 touch-manipulation"
                         :class="{ 'bg-indigo-100 text-indigo-700': currentOperator === op.value }"
                     >
                         {{ op.label }}
@@ -245,7 +245,7 @@ const numberButtons = [
                             :key="num"
                             @click="inputDigit(num)"
                             type="button"
-                            class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300"
+                            class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
                         >
                             {{ num }}
                         </button>
@@ -253,7 +253,7 @@ const numberButtons = [
                             v-if="rowIndex === 0"
                             @click="clearAll"
                             type="button"
-                            class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700"
+                            class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
                         >
                             AC
                         </button>
@@ -261,7 +261,7 @@ const numberButtons = [
                             v-else-if="rowIndex === 1"
                             @click="backspace"
                             type="button"
-                            class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700"
+                            class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
                         >
                             ⌫
                         </button>
@@ -269,7 +269,7 @@ const numberButtons = [
                             <button
                                 @click="executeEquals"
                                 type="button"
-                                class="row-span-2 h-full rounded-md bg-amber-500 text-2xl font-medium text-white transition hover:bg-amber-600 active:bg-amber-700"
+                                class="row-span-2 h-full rounded-md bg-amber-500 text-2xl font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
                             >
                                 =
                             </button>
@@ -279,14 +279,14 @@ const numberButtons = [
                     <button
                         @click="inputDigit('0')"
                         type="button"
-                        class="col-span-2 h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300"
+                        class="col-span-2 h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
                     >
                         0
                     </button>
                     <button
                         @click="inputDecimal"
                         type="button"
-                        class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300"
+                        class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
                     >
                         .
                     </button>
