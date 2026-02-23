@@ -1046,6 +1046,70 @@ class TransactionTest extends TestCase
     }
 
     #[Test]
+    public function 取引一覧のdate項目はYYYY_MM_DD形式で返される(): void
+    {
+        // Arrange: 取引を作成
+        $user     = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // Act: 取引一覧ページにアクセス
+        $response = $this->actingAs($user)->get(route('transactions.index', ['year_month' => '2026-01']));
+
+        // Assert: date が 'YYYY-MM-DD' 形式（input[type=date]で使える形式）で返される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 1)
+                ->where('transactions.0.date', '2026-01-04')
+        );
+    }
+
+    #[Test]
+    public function 取引更新時にdateが正しく変更される(): void
+    {
+        // Arrange: 既存の取引を準備
+        $user     = User::factory()->create();
+        $category = Category::create([
+            'name' => '食費',
+            'type' => FlowType::Expense,
+        ]);
+        $transaction = Transaction::create([
+            'date'        => '2026-01-04',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // Act: 日付を変更してPUT
+        $response = $this->actingAs($user)->put(route('transactions.update', $transaction), [
+            'date'        => '2026-02-15',
+            'type'        => 'expense',
+            'category_id' => $category->id,
+            'payer'       => 'person_a',
+            'amount'      => 1000,
+        ]);
+
+        // Assert: データベースで日付が更新されている
+        $response->assertRedirect(route('transactions.index'));
+        $this->assertDatabaseHas('transactions', [
+            'id'   => $transaction->id,
+            'date' => '2026-02-15',
+        ]);
+    }
+
+    #[Test]
     public function 取引一覧にyearMonthsプロパティが返される(): void
     {
         // Arrange
