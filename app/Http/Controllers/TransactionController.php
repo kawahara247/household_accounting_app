@@ -29,8 +29,26 @@ class TransactionController extends Controller
             'payer'       => $request->input('payer'),
             'type'        => $request->input('type'),
             'memo'        => $request->input('memo'),
-            'year_month'  => $request->input('year_month', $defaultYearMonth),
+            // year_month がURLに明示的に含まれる場合はその値を使用
+            // （空文字はConvertEmptyStringsToNullミドルウェアによりnullになる = 全件表示）
+            // 含まれない場合（初回アクセス・リセット後）は現在年月をデフォルト使用
+            'year_month'  => $request->exists('year_month')
+                ? $request->input('year_month')
+                : $defaultYearMonth,
         ];
+
+        // 取引が存在する年月を降順で取得
+        $availableYearMonths = Transaction::selectRaw("strftime('%Y-%m', date) as year_month")
+            ->distinct()
+            ->orderByRaw('year_month DESC')
+            ->pluck('year_month')
+            ->values()
+            ->toArray();
+
+        // 現在年月がリストにない場合は先頭に追加
+        if (! in_array($defaultYearMonth, $availableYearMonths, true)) {
+            array_unshift($availableYearMonths, $defaultYearMonth);
+        }
 
         $transactions = Transaction::with('category')
             ->filter($filters)
@@ -55,6 +73,7 @@ class TransactionController extends Controller
             'payers'       => $payers,
             'filters'      => $filters,
             'summary'      => $summary,
+            'yearMonths'   => $availableYearMonths,
         ]);
     }
 

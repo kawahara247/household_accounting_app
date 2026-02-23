@@ -83,7 +83,7 @@ class TransactionTest extends TestCase
             'type' => FlowType::Expense,
         ]);
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonA,
@@ -468,14 +468,14 @@ class TransactionTest extends TestCase
             'type' => FlowType::Expense,
         ]);
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $categoryFood->id,
             'payer'       => PayerType::PersonA,
             'amount'      => 1000,
         ]);
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $categoryTransport->id,
             'payer'       => PayerType::PersonA,
@@ -507,14 +507,14 @@ class TransactionTest extends TestCase
             'type' => FlowType::Expense,
         ]);
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonA,
             'amount'      => 1000,
         ]);
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonB,
@@ -550,14 +550,14 @@ class TransactionTest extends TestCase
             'type' => FlowType::Income,
         ]);
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $expenseCategory->id,
             'payer'       => PayerType::PersonA,
             'amount'      => 1000,
         ]);
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Income,
             'category_id' => $incomeCategory->id,
             'payer'       => PayerType::PersonA,
@@ -589,7 +589,7 @@ class TransactionTest extends TestCase
             'type' => FlowType::Expense,
         ]);
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonA,
@@ -597,7 +597,7 @@ class TransactionTest extends TestCase
             'memo'        => 'ランチ代',
         ]);
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonA,
@@ -636,7 +636,7 @@ class TransactionTest extends TestCase
 
         // 食費 + PersonA
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $categoryFood->id,
             'payer'       => PayerType::PersonA,
@@ -645,7 +645,7 @@ class TransactionTest extends TestCase
         ]);
         // 食費 + PersonB
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $categoryFood->id,
             'payer'       => PayerType::PersonB,
@@ -654,7 +654,7 @@ class TransactionTest extends TestCase
         ]);
         // 交通費 + PersonA
         Transaction::create([
-            'date'        => '2026-01-06',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $categoryTransport->id,
             'payer'       => PayerType::PersonA,
@@ -697,14 +697,14 @@ class TransactionTest extends TestCase
 
         // 収入: 50000 + 30000 = 80000
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Income,
             'category_id' => $incomeCategory->id,
             'payer'       => PayerType::PersonA,
             'amount'      => 50000,
         ]);
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Income,
             'category_id' => $incomeCategory->id,
             'payer'       => PayerType::PersonB,
@@ -713,14 +713,14 @@ class TransactionTest extends TestCase
 
         // 支出: 1000 + 2000 = 3000
         Transaction::create([
-            'date'        => '2026-01-06',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $expenseCategory->id,
             'payer'       => PayerType::PersonA,
             'amount'      => 1000,
         ]);
         Transaction::create([
-            'date'        => '2026-01-07',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $expenseCategory->id,
             'payer'       => PayerType::PersonB,
@@ -757,7 +757,7 @@ class TransactionTest extends TestCase
 
         // PersonAの収入: 50000
         Transaction::create([
-            'date'        => '2026-01-04',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Income,
             'category_id' => $incomeCategory->id,
             'payer'       => PayerType::PersonA,
@@ -765,7 +765,7 @@ class TransactionTest extends TestCase
         ]);
         // PersonBの収入: 30000（フィルタリングで除外される）
         Transaction::create([
-            'date'        => '2026-01-05',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Income,
             'category_id' => $incomeCategory->id,
             'payer'       => PayerType::PersonB,
@@ -774,7 +774,7 @@ class TransactionTest extends TestCase
 
         // PersonAの支出: 1000
         Transaction::create([
-            'date'        => '2026-01-06',
+            'date'        => now()->format('Y-m-d'),
             'type'        => FlowType::Expense,
             'category_id' => $expenseCategory->id,
             'payer'       => PayerType::PersonA,
@@ -1008,5 +1008,68 @@ class TransactionTest extends TestCase
             'amount' => 2000,
             'memo'   => '更新後のメモ',
         ]);
+    }
+
+    #[Test]
+    public function year_monthに空文字を指定すると全期間の取引が返される(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+
+        Transaction::create([
+            'date'        => now()->subMonth()->format('Y-m-d'),
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+        Transaction::create([
+            'date'        => now()->format('Y-m-d'),
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 2000,
+        ]);
+
+        // Act: year_month を空文字（「すべて」）で送信
+        $response = $this->actingAs($user)->get(route('transactions.index', ['year_month' => '']));
+
+        // Assert: 全期間の取引2件が返される
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('transactions', 2)
+                ->where('filters.year_month', null)
+        );
+    }
+
+    #[Test]
+    public function 取引一覧にyearMonthsプロパティが返される(): void
+    {
+        // Arrange
+        $user     = User::factory()->create();
+        $category = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+
+        Transaction::create([
+            'date'        => '2026-01-10',
+            'type'        => FlowType::Expense,
+            'category_id' => $category->id,
+            'payer'       => PayerType::PersonA,
+            'amount'      => 1000,
+        ]);
+
+        // Act
+        $response = $this->actingAs($user)->get(route('transactions.index', ['year_month' => '']));
+
+        // Assert: yearMonths プロパティに取引が存在する年月が含まれる
+        $response->assertOk();
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Transactions/Index')
+                ->has('yearMonths')
+                ->where('yearMonths', fn ($ym) => collect($ym)->contains('2026-01'))
+        );
     }
 }

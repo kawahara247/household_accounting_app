@@ -32,6 +32,10 @@ const props = defineProps({
         type: Object,
         default: () => ({ income: 0, expense: 0 }),
     },
+    yearMonths: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // 今日の日付
@@ -46,7 +50,8 @@ const filterForm = reactive({
     payer: props.filters.payer || '',
     type: props.filters.type || '',
     memo: props.filters.memo || '',
-    year_month: props.filters.year_month || currentYearMonth,
+    // null = 「すべて」選択済み（空文字にマップ）、undefined/string = そのまま使用
+    year_month: props.filters.year_month === null ? '' : (props.filters.year_month || currentYearMonth),
 });
 
 // フィルター適用
@@ -56,7 +61,7 @@ const applyFilters = () => {
     if (filterForm.payer) params.payer = filterForm.payer;
     if (filterForm.type) params.type = filterForm.type;
     if (filterForm.memo) params.memo = filterForm.memo;
-    if (filterForm.year_month) params.year_month = filterForm.year_month;
+    params.year_month = filterForm.year_month;
 
     router.get(route('transactions.index'), params, {
         preserveState: true,
@@ -81,6 +86,14 @@ const resetFilters = () => {
 const hasFilters = computed(() => {
     return filterForm.category_id || filterForm.payer || filterForm.type || filterForm.memo || (filterForm.year_month !== currentYearMonth);
 });
+
+// 年月リストを表示用フォーマットに変換: '2026-02' → '2026年2月'
+const formattedYearMonths = computed(() =>
+    props.yearMonths.map(ym => {
+        const [year, month] = ym.split('-');
+        return { value: ym, label: `${year}年${parseInt(month, 10)}月` };
+    })
+);
 
 // 収支差額
 const balance = computed(() => {
@@ -255,12 +268,20 @@ const submitDelete = () => {
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
                             <div>
                                 <label for="filter-year-month" class="block text-sm font-medium text-gray-700">年月</label>
-                                <input
+                                <select
                                     id="filter-year-month"
                                     v-model="filterForm.year_month"
-                                    type="month"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                />
+                                >
+                                    <option value="">すべて</option>
+                                    <option
+                                        v-for="ym in formattedYearMonths"
+                                        :key="ym.value"
+                                        :value="ym.value"
+                                    >
+                                        {{ ym.label }}
+                                    </option>
+                                </select>
                             </div>
 
                             <div>
