@@ -14,6 +14,8 @@ app = "household-accounting-app"
 [[services]]
   internal_port = 80
   protocol = "tcp"
+  auto_stop_machines = "off"
+  min_machines_running = 1
 
   [[services.ports]]
     handlers = ["http"]
