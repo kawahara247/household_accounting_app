@@ -11,6 +11,9 @@ fi
 
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database-data
 
+# Viteのhotファイルが残っているとdev serverを参照してしまうため削除する
+rm -f /var/www/html/public/hot
+
 if [[ -n "${BASIC_AUTH_USER:-}" && -n "${BASIC_AUTH_PASSWORD:-}" ]]; then
   htpasswd -bc "$HTPASSWD_FILE" "$BASIC_AUTH_USER" "$BASIC_AUTH_PASSWORD"
   chmod 640 "$HTPASSWD_FILE"

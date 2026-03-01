@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
+      - "5173:5173"
     volumes:
       - .:/var/www/html
       - /var/www/html/vendor
@@ -14,11 +15,3 @@ services:
       - APP_DEBUG=true
     working_dir: /var/www/html
 
-  node:
-    image: node:20-alpine
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-    command: npm run dev
-    ports:
-      - "5173:5173"

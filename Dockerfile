@@ -43,7 +43,7 @@ COPY . .
 
 # Laravel依存パッケージ
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build
+RUN npm install && npm run build && rm -f public/hot
 
 # SQLiteファイルがなければ作る
 RUN if [ ! -f database-data/database.sqlite ]; then mkdir -p database-data && touch database-data/database.sqlite; fi
