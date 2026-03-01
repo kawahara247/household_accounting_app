@@ -22,10 +22,10 @@ class DashboardService
      */
     public function getMonthlyTransactions(int $year, int $month): Collection
     {
-        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $startOfMonth = Carbon::createFromDate($year, $month, 1);
         $endOfMonth   = $startOfMonth->copy()->endOfMonth();
 
-        return Transaction::whereBetween('date', [$startOfMonth, $endOfMonth])->get();
+        return Transaction::whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])->get();
     }
 
     /**
