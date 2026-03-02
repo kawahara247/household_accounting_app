@@ -53,6 +53,8 @@ RUN chown -R www-data:www-data storage bootstrap/cache database-data
 
 # Copy Apache configuration
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/apache/mpm_prefork.conf /etc/apache2/conf-available/mpm_prefork.conf
+RUN a2enconf mpm_prefork
 
 # Entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
