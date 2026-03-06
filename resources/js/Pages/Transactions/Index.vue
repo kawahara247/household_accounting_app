@@ -176,6 +176,10 @@ const openCreateModal = () => {
     createForm.reset();
     createForm.date = today;
     createForm.type = 'expense';
+    const defaultCategory = props.categories.find(cat => cat.name === '個人の出費');
+    createForm.category_id = defaultCategory ? defaultCategory.id : '';
+    const defaultPayer = props.payers.find(p => p.label === 'コウちゃん');
+    createForm.payer = defaultPayer ? defaultPayer.value : '';
     createForm.clearErrors();
     showCreateModal.value = true;
 };
