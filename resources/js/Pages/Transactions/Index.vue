@@ -11,6 +11,8 @@ import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, reactive } from 'vue';
 
+const summarySection = ref(null);
+
 const props = defineProps({
     transactions: {
         type: Array,
@@ -65,7 +67,10 @@ const applyFilters = () => {
 
     router.get(route('transactions.index'), params, {
         preserveState: true,
-        preserveScroll: true,
+        preserveScroll: false,
+        onSuccess: () => {
+            summarySection.value?.scrollIntoView({ behavior: 'smooth' });
+        },
     });
 };
 
@@ -361,7 +366,7 @@ const submitDelete = () => {
                 </div>
 
                 <!-- サマリーセクション -->
-                <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div ref="summarySection" class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="overflow-hidden rounded-lg bg-white p-6 shadow-sm">
                         <div class="text-sm font-medium text-gray-500">収入合計</div>
                         <div class="mt-1 text-2xl font-semibold text-green-600">
