@@ -57,6 +57,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     定期取引
                                 </NavLink>
+                                <NavLink
+                                    :href="route('csv-import.create')"
+                                    :active="route().current('csv-import.create')"
+                                >
+                                    CSVインポート
+                                </NavLink>
                             </div>
                         </div>
 
@@ -181,6 +187,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('recurring-transactions.index')"
                         >
                             定期取引
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('csv-import.create')"
+                            :active="route().current('csv-import.create')"
+                        >
+                            CSVインポート
                         </ResponsiveNavLink>
                     </div>
 

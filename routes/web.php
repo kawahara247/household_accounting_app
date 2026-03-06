@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CsvImportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecurringTransactionController;
@@ -20,6 +21,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    // CSV インポート（/transactions より前に配置してルート競合を避ける）
+    Route::get('/transactions/import-csv', [CsvImportController::class, 'create'])->name('csv-import.create');
+    Route::post('/transactions/import-csv/preview', [CsvImportController::class, 'preview'])->name('csv-import.preview');
+    Route::post('/transactions/import-csv', [CsvImportController::class, 'store'])->name('csv-import.store');
 
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
