@@ -18,7 +18,9 @@ use Inertia\Response;
 
 class CsvImportController extends Controller
 {
-    public function __construct(private readonly CsvImportService $csvImportService) {}
+    public function __construct(private readonly CsvImportService $csvImportService)
+    {
+    }
 
     public function create(): Response
     {

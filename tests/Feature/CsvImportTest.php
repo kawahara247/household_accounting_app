@@ -49,7 +49,7 @@ class CsvImportTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('Transactions/ImportCsv')
                 ->where('previewRows', null)
         );
@@ -81,7 +81,7 @@ class CsvImportTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('Transactions/ImportCsv')
                 ->has('previewRows', 2)
                 ->where('previewRows.0.memo', '楽天ＳＰ　すき家　アプリ')
@@ -107,7 +107,7 @@ class CsvImportTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(
-            fn(Assert $page) => $page
+            fn (Assert $page) => $page
                 ->component('Transactions/ImportCsv')
                 ->has('previewRows', 2)
         );
