@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -263,6 +264,49 @@ class DashboardTest extends TestCase
                 ->has('payerBalances')
                 ->where('payerBalances.person_a.balance', 70000)
                 ->where('payerBalances.person_b.balance', -10000)
+        );
+    }
+
+    #[Test]
+    public function 月末日にdatetime形式で保存された取引もカレンダーに正しく集計される(): void
+    {
+        // Arrange: 月末日（3/31）に2件の取引を作成
+        // 1件はdate形式、1件はdatetime形式でDBに直接挿入（SQLiteの文字列比較バグを再現）
+        $user            = User::factory()->create();
+        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+
+        $this->travelTo('2026-03-31');
+
+        // date形式で保存（'2026-03-31'）
+        DB::table('transactions')->insert([
+            'date'        => '2026-03-31',
+            'type'        => FlowType::Expense->value,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonA->value,
+            'amount'      => 1000,
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // datetime形式で保存（'2026-03-31 00:00:00'）
+        DB::table('transactions')->insert([
+            'date'        => '2026-03-31 00:00:00',
+            'type'        => FlowType::Expense->value,
+            'category_id' => $expenseCategory->id,
+            'payer'       => PayerType::PersonB->value,
+            'amount'      => 2000,
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // Act: 2026年3月のダッシュボードにアクセス
+        $response = $this->actingAs($user)->get(route('dashboard', ['year' => 2026, 'month' => 3]));
+
+        // Assert: 両方の取引が集計に含まれる（合計3000円）
+        $response->assertInertia(
+            fn (Assert $page) => $page
+                ->where('dailyBalances.31.expense', 3000)
+                ->where('monthlyBalance.expense', 3000)
         );
     }
 }
