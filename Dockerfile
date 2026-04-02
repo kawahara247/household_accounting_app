@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     apache2-utils \
+    cron \
     libpng-dev \
     libonig-dev \
     libxml2-dev \

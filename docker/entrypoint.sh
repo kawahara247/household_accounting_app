@@ -24,12 +24,9 @@ if [[ $# -gt 0 ]]; then
   exec "$@"
 fi
 
-# Laravel Schedulerをバックグラウンドで起動（クラッシュ時に自動再起動）
-cd /var/www/html
-(while true; do
-  php artisan schedule:work >> /var/www/html/storage/logs/scheduler.log 2>&1
-  echo "[$(date)] schedule:work exited, restarting..." >> /var/www/html/storage/logs/scheduler.log
-  sleep 5
-done) &
+# Laravel Schedulerをcronで毎分実行
+echo "* * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/scheduler.log 2>&1" > /etc/cron.d/laravel-scheduler
+chmod 0644 /etc/cron.d/laravel-scheduler
+cron
 
 exec apache2-foreground
