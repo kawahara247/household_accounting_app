@@ -1,0 +1,1 @@
+/home/kawahara/.claude/rules/laravel-arch.md

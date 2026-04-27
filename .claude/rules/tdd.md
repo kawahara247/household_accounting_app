@@ -1,0 +1,1 @@
+/home/kawahara/.claude/rules/tdd.md
