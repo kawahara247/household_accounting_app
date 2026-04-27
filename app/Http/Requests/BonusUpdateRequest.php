@@ -34,7 +34,7 @@ class BonusUpdateRequest extends FormRequest
                 'date_format:Y-m',
                 Rule::unique('bonuses', 'year_month')
                     ->ignore($bonus->id)
-                    ->where(fn (Builder $query): Builder => $query->where('payer', $this->string('payer')->toString())),
+                    ->where(fn(Builder $query): Builder => $query->where('payer', $this->string('payer')->toString())),
             ],
             'payer'      => ['required', new Enum(PayerType::class)],
             'amount'     => ['required', 'integer', 'min:1'],
