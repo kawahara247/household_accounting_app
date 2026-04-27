@@ -3,10 +3,22 @@ set -e
 
 DB_FILE="/var/www/html/database-data/database.sqlite"
 HTPASSWD_FILE="/etc/apache2/.htpasswd"
+AUTOLOAD_FILE="/var/www/html/vendor/autoload.php"
+PAIL_PROVIDER_FILE="/var/www/html/vendor/laravel/pail/src/PailServiceProvider.php"
 
 if [[ ! -f "$DB_FILE" ]]; then
   mkdir -p "$(dirname "$DB_FILE")"
   touch "$DB_FILE"
+fi
+
+if [[ ! -f "$AUTOLOAD_FILE" ]]; then
+  echo "vendor/autoload.php missing; running composer install"
+  cd /var/www/html
+  COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist
+elif [[ "${APP_ENV:-production}" == "local" && ! -f "$PAIL_PROVIDER_FILE" ]]; then
+  echo "laravel/pail missing; running composer install for local dev dependencies"
+  cd /var/www/html
+  COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist
 fi
 
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database-data

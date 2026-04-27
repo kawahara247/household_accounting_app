@@ -43,7 +43,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Laravel依存パッケージ
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --optimize-autoloader
 RUN npm install && npm run build && rm -f public/hot
 
 # SQLiteファイルがなければ作る
