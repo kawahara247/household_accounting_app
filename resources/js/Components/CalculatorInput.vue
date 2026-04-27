@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     id: {
@@ -24,6 +24,8 @@ const previousValue = ref(null);
 const waitingForOperand = ref(false);
 const calculatorRef = ref(null);
 const inputRef = ref(null);
+const calculatorStyle = ref({});
+const teleportTarget = ref('body');
 
 const formattedDisplayValue = computed(() => {
     if (displayValue.value === '' || displayValue.value === '0') {
@@ -55,12 +57,63 @@ const formattedModelValue = computed(() => {
     return num.toLocaleString();
 });
 
-const openCalculator = () => {
+const updateTeleportTarget = () => {
+    teleportTarget.value = inputRef.value?.closest('dialog') ?? 'body';
+};
+
+const updateCalculatorPosition = () => {
+    if (!showCalculator.value || !inputRef.value) {
+        return;
+    }
+
+    updateTeleportTarget();
+
+    if (window.innerWidth < 640) {
+        calculatorStyle.value = {
+            top: '16px',
+            left: '16px',
+            right: '16px',
+            maxHeight: 'calc(100vh - 32px)',
+        };
+
+        return;
+    }
+
+    const viewportPadding = 16;
+    const offset = 8;
+    const inputRect = inputRef.value.getBoundingClientRect();
+    const popupWidth = Math.min(inputRect.width, window.innerWidth - viewportPadding * 2);
+    const popupHeight = calculatorRef.value?.offsetHeight ?? 420;
+    const spaceAbove = inputRect.top - viewportPadding - offset;
+    const spaceBelow = window.innerHeight - inputRect.bottom - viewportPadding - offset;
+    const shouldOpenAbove = spaceAbove >= popupHeight || spaceAbove > spaceBelow;
+    const availableHeight = Math.max(220, shouldOpenAbove ? spaceAbove : spaceBelow);
+    const top = shouldOpenAbove
+        ? Math.max(viewportPadding, inputRect.top - Math.min(popupHeight, availableHeight) - offset)
+        : inputRect.bottom + offset;
+    const left = Math.min(
+        Math.max(viewportPadding, inputRect.left),
+        window.innerWidth - popupWidth - viewportPadding,
+    );
+
+    calculatorStyle.value = {
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${popupWidth}px`,
+        maxHeight: `${availableHeight}px`,
+    };
+};
+
+const openCalculator = async () => {
+    updateTeleportTarget();
     showCalculator.value = true;
     displayValue.value = model.value ? String(model.value) : '';
     currentOperator.value = null;
     previousValue.value = null;
     waitingForOperand.value = false;
+
+    await nextTick();
+    updateCalculatorPosition();
 };
 
 const closeCalculator = () => {
@@ -78,12 +131,22 @@ const handleClickOutside = (event) => {
     }
 };
 
+const handleViewportChange = () => {
+    if (showCalculator.value) {
+        updateCalculatorPosition();
+    }
+};
+
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+    document.addEventListener('scroll', handleViewportChange, true);
+    window.addEventListener('resize', handleViewportChange);
 });
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('scroll', handleViewportChange, true);
+    window.removeEventListener('resize', handleViewportChange);
 });
 
 const inputDigit = (digit) => {
@@ -203,19 +266,21 @@ const numberButtons = [
             </span>
         </div>
 
-        <Transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="opacity-0 translate-y-1"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition ease-in duration-150"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 translate-y-1"
-        >
-            <div
-                v-if="showCalculator"
-                ref="calculatorRef"
-                class="absolute bottom-full z-50 mb-2 w-full rounded-lg border border-gray-200 bg-white p-3 shadow-lg"
+        <Teleport :to="teleportTarget">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0 translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-1"
             >
+                <div
+                    v-if="showCalculator"
+                    ref="calculatorRef"
+                    class="fixed z-[70] overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 shadow-lg"
+                    :style="calculatorStyle"
+                >
                 <div
                     class="mb-3 rounded-md bg-gray-100 px-4 py-3 text-right text-2xl font-semibold text-gray-800"
                 >
@@ -291,8 +356,9 @@ const numberButtons = [
                         .
                     </button>
                 </div>
-            </div>
-        </Transition>
+                </div>
+            </Transition>
+        </Teleport>
 
         <input
             type="hidden"

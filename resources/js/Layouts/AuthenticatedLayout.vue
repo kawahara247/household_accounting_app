@@ -58,6 +58,12 @@ const showingNavigationDropdown = ref(false);
                                     定期取引
                                 </NavLink>
                                 <NavLink
+                                    :href="route('bonuses.index')"
+                                    :active="route().current('bonuses.index')"
+                                >
+                                    ボーナス記録
+                                </NavLink>
+                                <NavLink
                                     :href="route('csv-import.create')"
                                     :active="route().current('csv-import.create')"
                                 >
@@ -187,6 +193,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('recurring-transactions.index')"
                         >
                             定期取引
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('bonuses.index')"
+                            :active="route().current('bonuses.index')"
+                        >
+                            ボーナス記録
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('csv-import.create')"

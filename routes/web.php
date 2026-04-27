@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\BonusController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CsvImportController;
 use App\Http\Controllers\DashboardController;
@@ -21,6 +22,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    Route::get('/bonuses', [BonusController::class, 'index'])->name('bonuses.index');
+    Route::post('/bonuses', [BonusController::class, 'store'])->name('bonuses.store');
+    Route::put('/bonuses/{bonus}', [BonusController::class, 'update'])->name('bonuses.update');
+    Route::delete('/bonuses/{bonus}', [BonusController::class, 'destroy'])->name('bonuses.destroy');
 
     // CSV インポート（/transactions より前に配置してルート競合を避ける）
     Route::get('/transactions/import-csv', [CsvImportController::class, 'create'])->name('csv-import.create');
