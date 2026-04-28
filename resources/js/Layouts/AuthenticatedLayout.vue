@@ -37,7 +37,7 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    ダッシュボード
+                                    カレンダー
                                 </NavLink>
                                 <NavLink
                                     :href="route('transactions.index')"
@@ -174,7 +174,7 @@ const showingNavigationDropdown = ref(false);
                             :href="route('dashboard')"
                             :active="route().current('dashboard')"
                         >
-                            ダッシュボード
+                            カレンダー
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('transactions.index')"
