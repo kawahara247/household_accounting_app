@@ -16,6 +16,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    bonusTotals: {
+        type: Array,
+        required: true,
+    },
     payers: {
         type: Array,
         required: true,
@@ -125,6 +129,19 @@ const submitDelete = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div
+                        v-for="bonusTotal in bonusTotals"
+                        :key="bonusTotal.value"
+                        class="rounded-lg bg-gray-50 p-4 text-center"
+                    >
+                        <div class="text-sm text-gray-600">{{ bonusTotal.label }}</div>
+                        <div class="text-xl font-bold text-green-700">
+                            +{{ formatAmount(bonusTotal.amount) }}
+                        </div>
+                    </div>
+                </div>
+
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div v-if="bonuses.length > 0">
                         <table class="hidden min-w-full divide-y divide-gray-200 md:table">

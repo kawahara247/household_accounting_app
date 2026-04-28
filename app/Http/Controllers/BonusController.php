@@ -22,14 +22,24 @@ class BonusController extends Controller
             ->orderBy('payer')
             ->get();
 
-        $payers = collect(PayerType::cases())->map(fn (PayerType $payer) => [
-            'value' => $payer->value,
-            'label' => $payer->label(),
-        ]);
+        $payers = collect(PayerType::cases())
+            ->map(fn (PayerType $payer): array => [
+                'value' => $payer->value,
+                'label' => $payer->label(),
+            ])
+            ->values();
+
+        $bonusTotals = $payers
+            ->map(fn (array $payer): array => [
+                ...$payer,
+                'amount' => (int) $bonuses->where('payer', $payer['value'])->sum('amount'),
+            ])
+            ->values();
 
         return Inertia::render('Bonuses/Index', [
-            'bonuses' => $bonuses,
-            'payers'  => $payers,
+            'bonuses'     => $bonuses,
+            'payers'      => $payers,
+            'bonusTotals' => $bonusTotals,
         ]);
     }
 

@@ -19,33 +19,50 @@ class BonusTest extends TestCase
     #[Test]
     public function 認証済みユーザーはボーナス一覧を取得できる(): void
     {
-        // Arrange: 認証ユーザーとボーナスを作成
+        // Arrange: 認証ユーザーと受取人別集計対象のボーナスを作成
         $user = User::factory()->create();
         Bonus::create([
             'year_month' => '2026-06',
             'payer'      => PayerType::PersonA,
             'amount'     => 250000,
         ]);
+        Bonus::create([
+            'year_month' => '2026-12',
+            'payer'      => PayerType::PersonA,
+            'amount'     => 50000,
+        ]);
+        Bonus::create([
+            'year_month' => '2026-07',
+            'payer'      => PayerType::PersonB,
+            'amount'     => 180000,
+        ]);
 
         // Act: ボーナス一覧ページにアクセス
         $response = $this->actingAs($user)->get(route('bonuses.index'));
 
-        // Assert: ボーナスと支払元の情報を含むページが返される
+        // Assert: ボーナスと受取人別合計を含むページが返される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->component('Bonuses/Index')
-                ->has('bonuses', 1)
+                ->has('bonuses', 3)
                 ->has(
                     'bonuses.0',
                     fn (Assert $bonus) => $bonus
                         ->has('id')
-                        ->where('year_month', '2026-06')
+                        ->where('year_month', '2026-12')
                         ->where('payer', 'person_a')
-                        ->where('amount', 250000)
+                        ->where('amount', 50000)
                         ->etc()
                 )
                 ->has('payers', 2)
+                ->has('bonusTotals', 2)
+                ->where('bonusTotals.0.value', 'person_a')
+                ->where('bonusTotals.0.label', config('payers.person_a'))
+                ->where('bonusTotals.0.amount', 300000)
+                ->where('bonusTotals.1.value', 'person_b')
+                ->where('bonusTotals.1.label', config('payers.person_b'))
+                ->where('bonusTotals.1.amount', 180000)
         );
     }
 
