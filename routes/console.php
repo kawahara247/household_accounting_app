@@ -10,7 +10,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// hourly で発火し、コマンド側の冪等性（当月分生成済みチェック）に取りこぼし対策を任せる
 Schedule::command('transactions:generate-recurring')
-    ->dailyAt('00:00')
+    ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/recurring-transactions.log'));
