@@ -36,11 +36,21 @@ if [[ $# -gt 0 ]]; then
   exec "$@"
 fi
 
+# cron デーモンは子プロセスへ最小環境（HOME/LOGNAME/PATH/SHELL/PWD）しか渡さないため、
+# fly.io machine env (DB_DATABASE, APP_KEY 等) を sourceable な形で退避し、
+# cron ジョブから BASH_ENV 経由で読み込ませる
+env -0 | while IFS='=' read -r -d '' k v; do
+  printf 'export %s=%q\n' "$k" "$v"
+done > /etc/container-env.sh
+chown root:www-data /etc/container-env.sh
+chmod 640 /etc/container-env.sh
+
 # Laravel Schedulerをcronで毎分実行
 # php は /usr/local/bin にあるため PATH を明示する
 cat > /etc/cron.d/laravel-scheduler <<'EOF'
-PATH=/usr/local/bin:/usr/bin:/bin
 SHELL=/bin/bash
+BASH_ENV=/etc/container-env.sh
+PATH=/usr/local/bin:/usr/bin:/bin
 * * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/scheduler.log 2>&1
 EOF
 chmod 0644 /etc/cron.d/laravel-scheduler
