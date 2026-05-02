@@ -23,6 +23,15 @@ fi
 
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database-data
 
+# root として artisan が叩かれても www-data グループで書き込み可能になるよう setgid + g+w を付与
+# （withoutOverlapping のロックファイルが root 所有になり cron の www-data から書けない事故を防ぐ）
+chgrp -R www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R g+w /var/www/html/storage /var/www/html/bootstrap/cache
+find /var/www/html/storage /var/www/html/bootstrap/cache -type d -exec chmod g+s {} +
+
+# 起動時に古いスケジューラロックが残っているとフィルタが失敗するため掃除
+find /var/www/html/storage/framework/cache/data -mindepth 1 ! -name .gitignore -delete 2>/dev/null || true
+
 # Viteのhotファイルが残っているとdev serverを参照してしまうため削除する
 rm -f /var/www/html/public/hot
 
