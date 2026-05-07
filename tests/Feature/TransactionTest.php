@@ -82,8 +82,9 @@ class TransactionTest extends TestCase
             'name' => '食費',
             'type' => FlowType::Expense,
         ]);
+        $transactionDate = now()->format('Y-m-d');
         Transaction::create([
-            'date'        => now()->format('Y-m-d'),
+            'date'        => $transactionDate,
             'type'        => FlowType::Expense,
             'category_id' => $category->id,
             'payer'       => PayerType::PersonA,
@@ -104,7 +105,9 @@ class TransactionTest extends TestCase
                     'transactions.0',
                     fn (Assert $transaction) => $transaction
                         ->has('id')
+                        ->where('date', $transactionDate)
                         ->where('type', 'expense')
+                        ->where('category_id', $category->id)
                         ->where('payer', 'person_a')
                         ->where('amount', 1000)
                         ->where('memo', 'ランチ代')

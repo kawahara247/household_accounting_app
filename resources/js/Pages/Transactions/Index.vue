@@ -176,15 +176,29 @@ const formatDate = (dateString) => {
     });
 };
 
-// 作成モーダル
-const openCreateModal = () => {
+const defaultCreateCategoryId = () => {
+    const defaultCategory = props.categories.find(cat => cat.name === '個人の出費');
+
+    return defaultCategory ? defaultCategory.id : '';
+};
+
+const defaultCreatePayer = () => {
+    const defaultPayer = props.payers.find(p => p.label === 'コウちゃん');
+
+    return defaultPayer ? defaultPayer.value : '';
+};
+
+const resetCreateFormForNewTransaction = () => {
     createForm.reset();
     createForm.date = today;
     createForm.type = 'expense';
-    const defaultCategory = props.categories.find(cat => cat.name === '個人の出費');
-    createForm.category_id = defaultCategory ? defaultCategory.id : '';
-    const defaultPayer = props.payers.find(p => p.label === 'コウちゃん');
-    createForm.payer = defaultPayer ? defaultPayer.value : '';
+    createForm.category_id = defaultCreateCategoryId();
+    createForm.payer = defaultCreatePayer();
+};
+
+// 作成モーダル
+const openCreateModal = () => {
+    resetCreateFormForNewTransaction();
     createForm.clearErrors();
     showCreateModal.value = true;
 };
@@ -192,6 +206,7 @@ const openCreateModal = () => {
 const closeCreateModal = () => {
     showCreateModal.value = false;
     createForm.reset();
+    createForm.clearErrors();
 };
 
 const submitCreate = () => {

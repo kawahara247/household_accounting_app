@@ -50,6 +50,7 @@ const today = new Date();
 const todayYear = today.getFullYear();
 const todayMonth = today.getMonth() + 1;
 const todayDate = today.getDate();
+const todayForInput = today.toISOString().split('T')[0];
 
 const isToday = (dayData) => {
     return dayData.isCurrentMonth
@@ -172,6 +173,7 @@ const selectedDateForInput = computed(() => {
 
 // 取引追加モーダル
 const showCreateModal = ref(false);
+const createModalMode = ref('create');
 
 const createForm = useForm({
     date: '',
@@ -206,21 +208,63 @@ const filteredCategories = computed(() => {
     return props.categories.filter(cat => cat.type === createForm.type);
 });
 
-const openCreateModal = () => {
+const createModalTitle = computed(() => {
+    return createModalMode.value === 'duplicate' ? '取引を複製' : '取引を追加';
+});
+
+const createModalSubmitLabel = computed(() => {
+    return createModalMode.value === 'duplicate' ? '複製して追加' : '追加';
+});
+
+const defaultCreateCategoryId = () => {
+    const defaultCategory = props.categories.find(cat => cat.name === '個人の出費');
+
+    return defaultCategory ? defaultCategory.id : '';
+};
+
+const defaultCreatePayer = () => {
+    const defaultPayer = props.payers.find(p => p.label === 'コウちゃん');
+
+    return defaultPayer ? defaultPayer.value : '';
+};
+
+const resetCreateFormForNewTransaction = () => {
     createForm.reset();
     createForm.date = selectedDateForInput.value;
     createForm.type = 'expense';
-    const defaultCategory = props.categories.find(cat => cat.name === '個人の出費');
-    createForm.category_id = defaultCategory ? defaultCategory.id : '';
-    const defaultPayer = props.payers.find(p => p.label === 'コウちゃん');
-    createForm.payer = defaultPayer ? defaultPayer.value : '';
+    createForm.category_id = defaultCreateCategoryId();
+    createForm.payer = defaultCreatePayer();
+};
+
+const populateCreateFormFromTransaction = (transaction) => {
+    createForm.reset();
+    createForm.date = todayForInput;
+    createForm.type = transaction.type;
+    createForm.category_id = transaction.category_id;
+    createForm.payer = transaction.payer;
+    createForm.amount = transaction.amount;
+    createForm.memo = transaction.memo || '';
+};
+
+const openCreateModal = () => {
+    createModalMode.value = 'create';
+    resetCreateFormForNewTransaction();
+    createForm.clearErrors();
+    showCreateModal.value = true;
+};
+
+const openDuplicateModal = (transaction) => {
+    createModalMode.value = 'duplicate';
+    populateCreateFormFromTransaction(transaction);
     createForm.clearErrors();
     showCreateModal.value = true;
 };
 
 const closeCreateModal = () => {
     showCreateModal.value = false;
+    createModalMode.value = 'create';
     createForm.reset();
+    createForm.clearErrors();
 };
 
 const onTypeChange = () => {
@@ -530,6 +574,12 @@ const filteredEditCategories = computed(() => {
                                             編集
                                         </button>
                                         <button
+                                            @click="openDuplicateModal(transaction)"
+                                            class="mr-2 text-sky-600 hover:text-sky-900"
+                                        >
+                                            複製
+                                        </button>
+                                        <button
                                             @click="openDeleteModal(transaction)"
                                             class="text-red-600 hover:text-red-900"
                                         >
@@ -574,6 +624,7 @@ const filteredEditCategories = computed(() => {
                                 </div>
                                 <div class="flex gap-3 shrink-0">
                                     <button @click="openEditModal(transaction)" class="text-indigo-600">編集</button>
+                                        <button @click="openDuplicateModal(transaction)" class="text-sky-600">複製</button>
                                     <button @click="openDeleteModal(transaction)" class="text-red-600">削除</button>
                                 </div>
                             </div>
@@ -593,7 +644,7 @@ const filteredEditCategories = computed(() => {
         <Modal :show="showCreateModal" @close="closeCreateModal" max-width="md">
             <form @submit.prevent="submitCreate" class="p-6">
                 <h2 class="text-lg font-medium text-gray-900">
-                    取引を追加
+                    {{ createModalTitle }}
                 </h2>
 
                 <div class="mt-6">
@@ -699,7 +750,7 @@ const filteredEditCategories = computed(() => {
                         キャンセル
                     </SecondaryButton>
                     <PrimaryButton :disabled="createForm.processing">
-                        追加
+                        {{ createModalSubmitLabel }}
                     </PrimaryButton>
                 </div>
             </form>

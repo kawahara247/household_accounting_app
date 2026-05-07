@@ -171,8 +171,20 @@ class DashboardTest extends TestCase
         // Assert: 指定日の取引のみが返される
         $response->assertOk();
         $response->assertJsonCount(2, 'transactions');
-        $response->assertJsonFragment(['id' => $transaction1->id, 'amount' => 50000, 'payer' => 'person_a']);
-        $response->assertJsonFragment(['id' => $transaction2->id, 'amount' => 1000, 'payer' => 'person_b']);
+        $response->assertJsonFragment([
+            'id'          => $transaction1->id,
+            'date'        => '2026-01-10',
+            'category_id' => $incomeCategory->id,
+            'amount'      => 50000,
+            'payer'       => 'person_a',
+        ]);
+        $response->assertJsonFragment([
+            'id'          => $transaction2->id,
+            'date'        => '2026-01-10',
+            'category_id' => $expenseCategory->id,
+            'amount'      => 1000,
+            'payer'       => 'person_b',
+        ]);
     }
 
     #[Test]
