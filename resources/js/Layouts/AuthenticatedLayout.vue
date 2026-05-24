@@ -64,6 +64,12 @@ const showingNavigationDropdown = ref(false);
                                     ボーナス記録
                                 </NavLink>
                                 <NavLink
+                                    :href="route('trends.index')"
+                                    :active="route().current('trends.index')"
+                                >
+                                    推移グラフ
+                                </NavLink>
+                                <NavLink
                                     :href="route('csv-import.create')"
                                     :active="route().current('csv-import.create')"
                                 >
@@ -199,6 +205,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('bonuses.index')"
                         >
                             ボーナス記録
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('trends.index')"
+                            :active="route().current('trends.index')"
+                        >
+                            推移グラフ
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('csv-import.create')"
