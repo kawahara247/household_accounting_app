@@ -255,6 +255,7 @@ const numberButtons = [
     <div class="relative">
         <div
             ref="inputRef"
+            @touchstart.prevent="openCalculator"
             @click="openCalculator"
             class="mt-1 block w-full cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 touch-manipulation"
         >
@@ -282,7 +283,7 @@ const numberButtons = [
                     :style="calculatorStyle"
                 >
                 <div
-                    class="mb-3 rounded-md bg-gray-100 px-4 py-3 text-right text-2xl font-semibold text-gray-800"
+                    class="mb-3 rounded-md bg-gray-100 px-4 py-3 text-right text-2xl font-semibold text-gray-800 select-none"
                 >
                     <span v-if="currentOperator" class="mr-2 text-sm text-gray-500">
                         {{ previousValue?.toLocaleString() }} {{ currentOperator }}
@@ -294,6 +295,7 @@ const numberButtons = [
                     <button
                         v-for="op in operatorButtons"
                         :key="op.value"
+                        @touchstart.prevent="performOperation(op.value)"
                         @click="performOperation(op.value)"
                         type="button"
                         class="h-12 rounded-md bg-gray-200 text-lg font-medium text-gray-700 transition hover:bg-gray-300 active:bg-gray-400 touch-manipulation"
@@ -308,6 +310,7 @@ const numberButtons = [
                         <button
                             v-for="num in row"
                             :key="num"
+                            @touchstart.prevent="inputDigit(num)"
                             @click="inputDigit(num)"
                             type="button"
                             class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
@@ -316,6 +319,7 @@ const numberButtons = [
                         </button>
                         <button
                             v-if="rowIndex === 0"
+                            @touchstart.prevent="clearAll"
                             @click="clearAll"
                             type="button"
                             class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
@@ -324,6 +328,7 @@ const numberButtons = [
                         </button>
                         <button
                             v-else-if="rowIndex === 1"
+                            @touchstart.prevent="backspace"
                             @click="backspace"
                             type="button"
                             class="h-14 rounded-md bg-amber-500 text-lg font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
@@ -332,6 +337,7 @@ const numberButtons = [
                         </button>
                         <template v-else-if="rowIndex === 2">
                             <button
+                                @touchstart.prevent="executeEquals"
                                 @click="executeEquals"
                                 type="button"
                                 class="row-span-2 h-full rounded-md bg-amber-500 text-2xl font-medium text-white transition hover:bg-amber-600 active:bg-amber-700 touch-manipulation"
@@ -342,6 +348,7 @@ const numberButtons = [
                     </template>
 
                     <button
+                        @touchstart.prevent="inputDigit('0')"
                         @click="inputDigit('0')"
                         type="button"
                         class="col-span-2 h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"
@@ -349,6 +356,7 @@ const numberButtons = [
                         0
                     </button>
                     <button
+                        @touchstart.prevent="inputDecimal"
                         @click="inputDecimal"
                         type="button"
                         class="h-14 rounded-md bg-gray-100 text-xl font-medium text-gray-800 transition hover:bg-gray-200 active:bg-gray-300 touch-manipulation"

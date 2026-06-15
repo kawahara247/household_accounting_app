@@ -325,9 +325,11 @@ const submitEdit = () => {
     editForm.put(route('transactions.update', editingTransaction.value.id), {
         preserveScroll: true,
         onSuccess: () => {
+            const date = editForm.date;
+            const [year, month] = date.split('-').map(Number);
             closeEditModal();
             closeDayModal();
-            router.reload();
+            router.get(route('dashboard', { year, month }));
         },
     });
 };

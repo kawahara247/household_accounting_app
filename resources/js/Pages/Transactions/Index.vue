@@ -246,7 +246,10 @@ const closeEditModal = () => {
 const submitEdit = () => {
     editForm.put(route('transactions.update', editForm.id), {
         preserveScroll: true,
-        onSuccess: () => closeEditModal(),
+        onSuccess: () => {
+            closeEditModal();
+            applyFilters();
+        },
     });
 };
 
