@@ -22,13 +22,10 @@ class DashboardTest extends TestCase
     #[Test]
     public function 認証済みユーザーはダッシュボードにアクセスできる(): void
     {
-        // Arrange: 認証ユーザーを作成
         $user = User::factory()->create();
 
-        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert: 必要なpropsを含むInertiaページが返される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -45,39 +42,18 @@ class DashboardTest extends TestCase
     #[Test]
     public function 日別の収支合計を取得できる(): void
     {
-        // Arrange: 同じ日と異なる日に収入・支出の取引を作成
         $user            = User::factory()->create();
-        $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $incomeCategory  = Category::factory()->income()->name('給与')->create();
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
         $this->travelTo('2026-01-15');
 
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Income,
-            'category_id' => $incomeCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 50000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 1000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 2000,
-        ]);
+        Transaction::factory()->forCategory($incomeCategory)->on('2026-01-10')->payer(PayerType::PersonA)->amount(50000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-10')->payer(PayerType::PersonA)->amount(1000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-15')->payer(PayerType::PersonB)->amount(2000)->create();
 
-        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert: 日別の収入・支出・差引が正しく計算される
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->where('dailyBalances.10.income', 50000)
@@ -92,39 +68,18 @@ class DashboardTest extends TestCase
     #[Test]
     public function 月間の収支合計を取得できる(): void
     {
-        // Arrange: 同月内に複数の収入・支出取引を作成
         $user            = User::factory()->create();
-        $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $incomeCategory  = Category::factory()->income()->name('給与')->create();
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
         $this->travelTo('2026-01-15');
 
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Income,
-            'category_id' => $incomeCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 100000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 30000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-20',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 20000,
-        ]);
+        Transaction::factory()->forCategory($incomeCategory)->on('2026-01-10')->payer(PayerType::PersonA)->amount(100000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-15')->payer(PayerType::PersonA)->amount(30000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-20')->payer(PayerType::PersonB)->amount(20000)->create();
 
-        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert: 月間の収入・支出・差引の合計が正しく計算される
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->where('monthlyBalance.income', 100000)
@@ -136,39 +91,33 @@ class DashboardTest extends TestCase
     #[Test]
     public function 特定日の取引一覧を取得できる(): void
     {
-        // Arrange: 複数日に取引を作成（1/10に2件、1/11に1件）
         $user            = User::factory()->create();
-        $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $incomeCategory  = Category::factory()->income()->name('給与')->create();
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
-        $transaction1 = Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Income,
-            'category_id' => $incomeCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 50000,
-            'memo'        => '給与',
-        ]);
-        $transaction2 = Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 1000,
-            'memo'        => 'ランチ',
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-11',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 2000,
-        ]);
+        $transaction1 = Transaction::factory()
+            ->forCategory($incomeCategory)
+            ->on('2026-01-10')
+            ->payer(PayerType::PersonA)
+            ->amount(50000)
+            ->memo('給与')
+            ->create();
+        $transaction2 = Transaction::factory()
+            ->forCategory($expenseCategory)
+            ->on('2026-01-10')
+            ->payer(PayerType::PersonB)
+            ->amount(1000)
+            ->memo('ランチ')
+            ->create();
+        Transaction::factory()
+            ->forCategory($expenseCategory)
+            ->on('2026-01-11')
+            ->payer(PayerType::PersonA)
+            ->amount(2000)
+            ->create();
 
-        // Act: 特定日（1/10）の取引一覧APIを呼び出す
         $response = $this->actingAs($user)->getJson(route('dashboard.transactions', ['date' => '2026-01-10']));
 
-        // Assert: 指定日の取引のみが返される
         $response->assertOk();
         $response->assertJsonCount(2, 'transactions');
         $response->assertJsonFragment([
@@ -190,31 +139,16 @@ class DashboardTest extends TestCase
     #[Test]
     public function 年月を指定してダッシュボードを表示できる(): void
     {
-        // Arrange: 異なる月（2025年12月と2026年1月）に取引を作成
         $user            = User::factory()->create();
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
         $this->travelTo('2026-01-15');
 
-        Transaction::create([
-            'date'        => '2025-12-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 5000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 3000,
-        ]);
+        Transaction::factory()->forCategory($expenseCategory)->on('2025-12-10')->payer(PayerType::PersonA)->amount(5000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-10')->payer(PayerType::PersonA)->amount(3000)->create();
 
-        // Act: 過去の年月（2025年12月）を指定してダッシュボードにアクセス
         $response = $this->actingAs($user)->get(route('dashboard', ['year' => 2025, 'month' => 12]));
 
-        // Assert: 指定した年月の取引のみが集計される
         $response->assertOk();
         $response->assertInertia(
             fn (Assert $page) => $page
@@ -228,49 +162,22 @@ class DashboardTest extends TestCase
     #[Test]
     public function payer別の月次収支を取得できる(): void
     {
-        // Arrange: 複数のpayerで収入・支出を作成
         $user            = User::factory()->create();
-        $incomeCategory  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $incomeCategory  = Category::factory()->income()->name('給与')->create();
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
         $this->travelTo('2026-01-15');
 
-        // PersonA: 収入100,000 - 支出30,000 = 収支70,000
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Income,
-            'category_id' => $incomeCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 100000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 30000,
-        ]);
+        // PersonA: 100000 - 30000 = 70000
+        Transaction::factory()->forCategory($incomeCategory)->on('2026-01-10')->payer(PayerType::PersonA)->amount(100000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-15')->payer(PayerType::PersonA)->amount(30000)->create();
 
-        // PersonB: 収入50,000 - 支出60,000 = 収支-10,000
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Income,
-            'category_id' => $incomeCategory->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 50000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-20',
-            'type'        => FlowType::Expense,
-            'category_id' => $expenseCategory->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 60000,
-        ]);
+        // PersonB: 50000 - 60000 = -10000
+        Transaction::factory()->forCategory($incomeCategory)->on('2026-01-10')->payer(PayerType::PersonB)->amount(50000)->create();
+        Transaction::factory()->forCategory($expenseCategory)->on('2026-01-20')->payer(PayerType::PersonB)->amount(60000)->create();
 
-        // Act: ダッシュボードページにアクセス
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        // Assert: payer別の収支が正しく計算される
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->has('payerBalances')
@@ -282,10 +189,8 @@ class DashboardTest extends TestCase
     #[Test]
     public function 月末日にdatetime形式で保存された取引もカレンダーに正しく集計される(): void
     {
-        // Arrange: 月末日（3/31）に2件の取引を作成
-        // 1件はdate形式、1件はdatetime形式でDBに直接挿入（SQLiteの文字列比較バグを再現）
         $user            = User::factory()->create();
-        $expenseCategory = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $expenseCategory = Category::factory()->expense()->name('食費')->create();
 
         $this->travelTo('2026-03-31');
 
@@ -311,10 +216,8 @@ class DashboardTest extends TestCase
             'updated_at'  => now(),
         ]);
 
-        // Act: 2026年3月のダッシュボードにアクセス
         $response = $this->actingAs($user)->get(route('dashboard', ['year' => 2026, 'month' => 3]));
 
-        // Assert: 両方の取引が集計に含まれる（合計3000円）
         $response->assertInertia(
             fn (Assert $page) => $page
                 ->where('dailyBalances.31.expense', 3000)

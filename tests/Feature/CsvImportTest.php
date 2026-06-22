@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\FlowType;
 use App\Enums\PayerType;
 use App\Models\Category;
 use App\Models\User;
@@ -26,10 +25,7 @@ class CsvImportTest extends TestCase
     {
         parent::setUp();
         $this->user     = User::factory()->create();
-        $this->category = Category::create([
-            'name' => '個人の出費',
-            'type' => FlowType::Expense,
-        ]);
+        $this->category = Category::factory()->expense()->name('個人の出費')->create();
     }
 
     // ---- create ----

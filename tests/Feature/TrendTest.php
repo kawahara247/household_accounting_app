@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Enums\FlowType;
 use App\Enums\PayerType;
 use App\Models\Category;
 use App\Models\Transaction;
@@ -89,32 +88,13 @@ class TrendTest extends TestCase
     #[Test]
     public function カテゴリ別月別合計がdatasetsに含まれる(): void
     {
-        $user = User::factory()->create();
+        $user      = User::factory()->create();
+        $food      = Category::factory()->expense()->name('食費')->create();
+        $transport = Category::factory()->expense()->name('交通費')->create();
 
-        $food      = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-        $transport = Category::create(['name' => '交通費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 10000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-20',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 5000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-02-05',
-            'type'        => FlowType::Expense,
-            'category_id' => $transport->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 3000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->amount(10000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-01-20')->amount(5000)->create();
+        Transaction::factory()->forCategory($transport)->on('2026-02-05')->amount(3000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'        => 'expense',
@@ -145,15 +125,9 @@ class TrendTest extends TestCase
     public function データがない月は0になる(): void
     {
         $user = User::factory()->create();
-        $food = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $food = Category::factory()->expense()->name('食費')->create();
 
-        Transaction::create([
-            'date'        => '2026-02-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 8000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-02-10')->amount(8000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'        => 'expense',
@@ -176,25 +150,12 @@ class TrendTest extends TestCase
     #[Test]
     public function 収入カテゴリはtypeがincomeの取引のみ集計される(): void
     {
-        $user = User::factory()->create();
+        $user    = User::factory()->create();
+        $salary  = Category::factory()->income()->name('給与')->create();
+        $expense = Category::factory()->expense()->name('食費')->create();
 
-        $salary  = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $expense = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-25',
-            'type'        => FlowType::Income,
-            'category_id' => $salary->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 300000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $expense->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 5000,
-        ]);
+        Transaction::factory()->forCategory($salary)->on('2026-01-25')->amount(300000)->create();
+        Transaction::factory()->forCategory($expense)->on('2026-01-10')->amount(5000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'        => 'income',
@@ -219,22 +180,10 @@ class TrendTest extends TestCase
     public function availableMonthsに取引のある月一覧が含まれる(): void
     {
         $user = User::factory()->create();
-        $food = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
+        $food = Category::factory()->expense()->name('食費')->create();
 
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 1000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-03-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 2000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->amount(1000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-03-15')->amount(2000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index'));
 
@@ -306,23 +255,10 @@ class TrendTest extends TestCase
     public function splitByPayerがtrueのときpayer別データセットが返される(): void
     {
         $user = User::factory()->create();
+        $food = Category::factory()->expense()->name('食費')->create();
 
-        $food = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 10000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 5000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->payer(PayerType::PersonA)->amount(10000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-01-15')->payer(PayerType::PersonB)->amount(5000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'           => 'expense',
@@ -372,25 +308,12 @@ class TrendTest extends TestCase
     #[Test]
     public function 収支は収入合計から支出合計を差し引いた値になる(): void
     {
-        $user = User::factory()->create();
+        $user   = User::factory()->create();
+        $salary = Category::factory()->income()->name('給与')->create();
+        $food   = Category::factory()->expense()->name('食費')->create();
 
-        $salary = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $food   = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-25',
-            'type'        => FlowType::Income,
-            'category_id' => $salary->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 300000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 50000,
-        ]);
+        Transaction::factory()->forCategory($salary)->on('2026-01-25')->amount(300000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->amount(50000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'        => 'balance',
@@ -415,16 +338,9 @@ class TrendTest extends TestCase
     public function 収入がない月は支出の負値になる(): void
     {
         $user = User::factory()->create();
+        $food = Category::factory()->expense()->name('食費')->create();
 
-        $food = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 50000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->amount(50000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'        => 'balance',
@@ -470,32 +386,13 @@ class TrendTest extends TestCase
     #[Test]
     public function 収支でsplitByPayerがtrueのとき支払人別収支データセットが返される(): void
     {
-        $user = User::factory()->create();
+        $user   = User::factory()->create();
+        $salary = Category::factory()->income()->name('給与')->create();
+        $food   = Category::factory()->expense()->name('食費')->create();
 
-        $salary = Category::create(['name' => '給与', 'type' => FlowType::Income]);
-        $food   = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-25',
-            'type'        => FlowType::Income,
-            'category_id' => $salary->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 300000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 50000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-15',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 30000,
-        ]);
+        Transaction::factory()->forCategory($salary)->on('2026-01-25')->payer(PayerType::PersonA)->amount(300000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->payer(PayerType::PersonA)->amount(50000)->create();
+        Transaction::factory()->forCategory($food)->on('2026-01-15')->payer(PayerType::PersonB)->amount(30000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'           => 'balance',
@@ -550,25 +447,12 @@ class TrendTest extends TestCase
     #[Test]
     public function splitByPayerがtrueのとき複数カテゴリはカテゴリxpayer分のデータセットになる(): void
     {
-        $user = User::factory()->create();
+        $user      = User::factory()->create();
+        $food      = Category::factory()->expense()->name('食費')->create();
+        $transport = Category::factory()->expense()->name('交通費')->create();
 
-        $food      = Category::create(['name' => '食費', 'type' => FlowType::Expense]);
-        $transport = Category::create(['name' => '交通費', 'type' => FlowType::Expense]);
-
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $food->id,
-            'payer'       => PayerType::PersonA,
-            'amount'      => 3000,
-        ]);
-        Transaction::create([
-            'date'        => '2026-01-10',
-            'type'        => FlowType::Expense,
-            'category_id' => $transport->id,
-            'payer'       => PayerType::PersonB,
-            'amount'      => 1000,
-        ]);
+        Transaction::factory()->forCategory($food)->on('2026-01-10')->payer(PayerType::PersonA)->amount(3000)->create();
+        Transaction::factory()->forCategory($transport)->on('2026-01-10')->payer(PayerType::PersonB)->amount(1000)->create();
 
         $response = $this->actingAs($user)->get(route('trends.index', [
             'type'           => 'expense',
