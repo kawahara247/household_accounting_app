@@ -4,13 +4,18 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     previewRows: {
         type: Array,
         default: null,
+    },
+    categories: {
+        type: Array,
+        default: () => [],
     },
 });
 
@@ -26,13 +31,31 @@ const submitUpload = () => {
     uploadForm.post(route('csv-import.preview'), { forceFormData: true });
 };
 
-// ---- プレビュー・インポートフォーム ----
-// 全行を選択状態で初期化
-const checkedIndices = ref(new Set(props.previewRows?.map((_, i) => i) ?? []));
+// ---- プレビュー・編集フォーム ----
+// 編集可能なローカルstate（propsを直接書き換えない）
+// サーバ側でmemo・category_idは既に埋め込まれている
+const buildEditableRows = (rows) =>
+    (rows ?? []).map((row) => ({
+        memo: row.memo,
+        amount: row.amount,
+        category_id: row.category_id,
+    }));
+
+const editableRows = ref(buildEditableRows(props.previewRows));
+const checkedIndices = ref(new Set(editableRows.value.map((_, i) => i)));
+
+// preview後にInertiaがpropsを更新したらローカルstateも作り直す
+watch(
+    () => props.previewRows,
+    (rows) => {
+        editableRows.value = buildEditableRows(rows);
+        checkedIndices.value = new Set(editableRows.value.map((_, i) => i));
+    },
+);
 
 const toggleAll = (e) => {
     if (e.target.checked) {
-        checkedIndices.value = new Set(props.previewRows.map((_, i) => i));
+        checkedIndices.value = new Set(editableRows.value.map((_, i) => i));
     } else {
         checkedIndices.value = new Set();
     }
@@ -48,23 +71,27 @@ const toggleRow = (index) => {
     checkedIndices.value = next;
 };
 
-const allChecked = computed(() =>
-    props.previewRows != null && checkedIndices.value.size === props.previewRows.length
+const allChecked = computed(
+    () => editableRows.value.length > 0 && checkedIndices.value.size === editableRows.value.length,
 );
 
 const selectedRows = computed(() =>
-    (props.previewRows ?? []).filter((_, i) => checkedIndices.value.has(i))
+    editableRows.value.filter((_, i) => checkedIndices.value.has(i)),
 );
 
 const selectedTotal = computed(() =>
-    selectedRows.value.reduce((sum, row) => sum + row.amount, 0)
+    selectedRows.value.reduce((sum, row) => sum + row.amount, 0),
 );
 
 const today = new Date().toISOString().split('T')[0];
 const importForm = useForm({ date: today, transactions: [] });
 
 const submitImport = () => {
-    importForm.transactions = selectedRows.value;
+    importForm.transactions = selectedRows.value.map((row) => ({
+        memo: row.memo,
+        amount: row.amount,
+        category_id: row.category_id,
+    }));
     importForm.post(route('csv-import.store'));
 };
 
@@ -86,7 +113,7 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
         </template>
 
         <div class="py-12">
-            <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 
                 <!-- アップロード状態 -->
                 <div v-if="previewRows === null" class="rounded-lg bg-white p-6 shadow">
@@ -136,7 +163,7 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
                         <div class="rounded-lg bg-white p-4 shadow text-center">
                             <div class="text-sm text-gray-500">CSVの件数</div>
                             <div class="mt-1 text-2xl font-bold text-gray-900">
-                                {{ previewRows.length }}件
+                                {{ editableRows.length }}件
                             </div>
                         </div>
                         <div class="rounded-lg bg-white p-4 shadow text-center">
@@ -167,7 +194,10 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
                                         />
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                        利用店名・商品名
+                                        カテゴリ
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                        メモ
                                     </th>
                                     <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                                         金額
@@ -176,7 +206,7 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
                                 <tr
-                                    v-for="(row, index) in previewRows"
+                                    v-for="(row, index) in editableRows"
                                     :key="index"
                                     :class="checkedIndices.has(index) ? '' : 'opacity-40'"
                                     class="hover:bg-gray-50"
@@ -190,7 +220,27 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
                                         />
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-900">
-                                        {{ row.memo }}
+                                        <select
+                                            v-model="row.category_id"
+                                            :disabled="!checkedIndices.has(index)"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
+                                        >
+                                            <option
+                                                v-for="category in categories"
+                                                :key="category.id"
+                                                :value="category.id"
+                                            >
+                                                {{ category.name }}
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-900">
+                                        <TextInput
+                                            v-model="row.memo"
+                                            type="text"
+                                            class="block w-full"
+                                            :disabled="!checkedIndices.has(index)"
+                                        />
                                     </td>
                                     <td class="px-4 py-3 text-right text-sm font-medium text-red-600">
                                         ¥{{ formatAmount(row.amount) }}
@@ -202,23 +252,41 @@ const formatAmount = (amount) => amount.toLocaleString('ja-JP');
                         <!-- カードリスト（モバイル） -->
                         <ul class="divide-y divide-gray-200 md:hidden">
                             <li
-                                v-for="(row, index) in previewRows"
+                                v-for="(row, index) in editableRows"
                                 :key="index"
                                 :class="checkedIndices.has(index) ? '' : 'opacity-40'"
-                                class="flex items-center gap-3 px-4 py-3"
+                                class="space-y-2 px-4 py-3"
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="checkedIndices.has(index)"
-                                    class="rounded border-gray-300 text-indigo-600"
-                                    @change="toggleRow(index)"
-                                />
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm text-gray-900">{{ row.memo }}</p>
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        :checked="checkedIndices.has(index)"
+                                        class="rounded border-gray-300 text-indigo-600"
+                                        @change="toggleRow(index)"
+                                    />
+                                    <select
+                                        v-model="row.category_id"
+                                        :disabled="!checkedIndices.has(index)"
+                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
+                                    >
+                                        <option
+                                            v-for="category in categories"
+                                            :key="category.id"
+                                            :value="category.id"
+                                        >
+                                            {{ category.name }}
+                                        </option>
+                                    </select>
+                                    <p class="whitespace-nowrap text-sm font-medium text-red-600">
+                                        ¥{{ formatAmount(row.amount) }}
+                                    </p>
                                 </div>
-                                <p class="text-sm font-medium text-red-600">
-                                    ¥{{ formatAmount(row.amount) }}
-                                </p>
+                                <TextInput
+                                    v-model="row.memo"
+                                    type="text"
+                                    class="block w-full text-sm"
+                                    :disabled="!checkedIndices.has(index)"
+                                />
                             </li>
                         </ul>
                     </div>

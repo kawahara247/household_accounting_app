@@ -45,7 +45,7 @@ class TrendController extends Controller
             }
         } else {
             $type       = FlowType::from($typeStr);
-            $categories = Category::where('type', $type)->orderBy('id')->get();
+            $categories = Category::byType($type)->orderBy('id')->get();
             if ($splitByPayer) {
                 $rows     = $this->query->fetchPayerSplitCategoryMonthlyTotals($type, $startDate, $endDate);
                 $datasets = $this->aggregator->buildPayerSplitDatasets($labels, $categories, $rows);

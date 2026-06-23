@@ -11,6 +11,7 @@ use App\Http\Requests\CsvImportStoreRequest;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Services\CsvImportService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -26,6 +27,7 @@ class CsvImportController extends Controller
     {
         return Inertia::render('Transactions/ImportCsv', [
             'previewRows' => null,
+            'categories'  => $this->expenseCategories(),
         ]);
     }
 
@@ -34,23 +36,31 @@ class CsvImportController extends Controller
         $filePath    = $request->file('csv_file')->getRealPath();
         $previewRows = $this->csvImportService->parseCreditCardCsv($filePath);
 
+        $categories = $this->expenseCategories();
+        $default    = $categories->first(fn (Category $c): bool => $c->name === '個人の出費')
+            ?? $categories->first();
+        $defaultCategoryId = $default?->id;
+
+        $previewRows = array_map(
+            fn (array $row): array => [...$row, 'category_id' => $defaultCategoryId],
+            $previewRows,
+        );
+
         return Inertia::render('Transactions/ImportCsv', [
             'previewRows' => $previewRows,
+            'categories'  => $categories,
         ]);
     }
 
     public function store(CsvImportStoreRequest $request): RedirectResponse
     {
-        // カテゴリは「個人の出費」、支払元は（PersonA）で固定
-        $category = Category::where('name', '個人の出費')->firstOrFail();
-
         $date = $request->input('date');
 
         foreach ($request->input('transactions') as $row) {
             Transaction::create([
                 'date'        => $date,
                 'type'        => FlowType::Expense,
-                'category_id' => $category->id,
+                'category_id' => $row['category_id'],
                 'payer'       => PayerType::PersonA,
                 'amount'      => $row['amount'],
                 'memo'        => $row['memo'] ?? null,
@@ -58,5 +68,15 @@ class CsvImportController extends Controller
         }
 
         return Redirect::route('transactions.index');
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
+    private function expenseCategories(): Collection
+    {
+        return Category::byType(FlowType::Expense)
+            ->orderBy('id')
+            ->get(['id', 'name']);
     }
 }
